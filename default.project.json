@@ -36,6 +36,13 @@
         }
     },
 
+    "ServerScriptService": {
+      "Shops": {
+        "$className": "Folder",
+        "$path": "src/ServerScriptService/Shops"
+      }
+    },
+
     "StarterGui": {
       "ShopGui": {
         "$className": "ScreenGui",

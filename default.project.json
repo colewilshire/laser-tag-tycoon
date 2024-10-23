@@ -1,0 +1,51 @@
+{
+  "name": "laser-tag-tycoon",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "VendingMachines": {
+        "$className": "Folder",
+        "VendingMachineOnTouch": {
+          "$className": "Model",
+          "Scripts": {
+            "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineOnTouch"
+          }
+        }
+      }
+    },
+
+    "Workspace": {
+      "VendingMachineOnTouch": {
+        "$className": "Model",
+        "Scripts": {
+          "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineOnTouch"
+        }
+      }
+    },
+
+    "StarterGui": {
+      "ShopGui": {
+        "$className": "ScreenGui",
+        "RemoteEvents": {
+          "$className": "Folder",
+          "EnableGuiEvent": {
+            "$className": "RemoteEvent"
+          },
+          "DisableGuiEvent": {
+            "$className": "RemoteEvent"
+          }
+        },
+        "Scripts": {
+          "$path": "src/StarterGui/ShopGui"
+        }
+      },
+      "SkinGui": {
+        "$className": "ScreenGui",
+        "Scripts": {
+          "$path": "src/StarterGui/SkinGui"
+        }
+      }
+    }
+  }
+}

@@ -11,6 +11,12 @@
           "Scripts": {
             "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineOnTouch"
           }
+        },
+        "VendingMachineProximityPrompt": {
+          "$className": "Model",
+          "Scripts": {
+            "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineProximityPrompt"
+          }
         }
       }
     },
@@ -21,7 +27,13 @@
         "Scripts": {
           "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineOnTouch"
         }
-      }
+      },
+      "VendingMachineProximityPrompt": {
+          "$className": "Model",
+          "Scripts": {
+            "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineProximityPrompt"
+          }
+        }
     },
 
     "StarterGui": {

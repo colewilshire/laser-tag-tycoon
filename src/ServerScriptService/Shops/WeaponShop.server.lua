@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local dataManager = require(ServerScriptService.Modules.DataManager)
+local shopGuiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
 
 local function TryAddWeapon(player: Player, weaponName: string): boolean
     local profile: table = dataManager.Profiles[player]
@@ -20,8 +21,17 @@ local function TryAddWeapon(player: Player, weaponName: string): boolean
     return true
 end
 
+local function EquipWeapon(player: Player, weaponName: string)
+    local weaponTemplate: Tool = ReplicatedStorage.Weapons:FindFirstChild(weaponName)
+
+    if weaponTemplate then
+        local weapon: Tool = weaponTemplate:Clone()
+        weapon.Parent = player.Backpack
+    end
+end
+
 local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
-    local weapon: Model = ReplicatedStorage.Weapons:FindFirstChild(weaponName)
+    local weapon: Tool = ReplicatedStorage.Weapons:FindFirstChild(weaponName)
     if not weapon then
         print("Error: Weapon with given name does not exist.")
         return false
@@ -35,6 +45,7 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
     if cash >= cost then
         if TryAddWeapon(player, weaponName) then
             cash -= cost
+            EquipWeapon(player, weaponName)
             print("Success: " .. cash .. " Cash remaining.")
             return true
         else
@@ -47,6 +58,40 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
     end
 end
 
-ReplicatedStorage.RemoteFunctions.ShopGui.TryPurchaseWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)
+local function GetOwnedWeapons(player: Player): {[string]: boolean}
+    while not dataManager.Profiles[player] do
+        task.wait(1)
+    end
+
+    local profile: table = dataManager.Profiles[player]
+    local data: {[string]: any} = profile.Data
+
+    if not data["Weapons"] then
+        data["Weapons"] = {}
+    end
+
+    return data["Weapons"]
+end
+
+local function EquipOwnedWeapons(player: Player)
+    local ownedWeapons: {[string]: boolean} = GetOwnedWeapons(player)
+    local firstWeaponName: string = next(ownedWeapons)
+
+    for weaponName: string, _: boolean in pairs(ownedWeapons) do
+        EquipWeapon(player, weaponName)
+    end
+
+    if firstWeaponName then
+        player.Character.Humanoid:EquipTool(player.Backpack:FindFirstChild(firstWeaponName))
+    end
+end
+
+shopGuiRemoteFunctions.TryPurchaseWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)
     return TryPurchaseWeapon(player, weaponName)
+end)
+
+game:GetService("Players").PlayerAdded:Connect(function(player: Player)
+    player.CharacterAdded:Connect(function()
+        EquipOwnedWeapons(player)
+    end)
 end)

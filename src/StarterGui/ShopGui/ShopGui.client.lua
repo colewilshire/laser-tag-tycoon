@@ -13,6 +13,41 @@ local scrollingFrame: ScrollingFrame = shopFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
 local activeItemButtonFrame: Frame
 
+local function HighlightActiveWeapon(weaponButtonFrame: Frame)
+    if activeItemButtonFrame then
+        activeItemButtonFrame.ItemButton.UIStroke.Enabled = false
+    end
+
+    activeItemButtonFrame = weaponButtonFrame
+    activeItemButtonFrame.ItemButton.UIStroke.Enabled = true
+end
+
+local function DisplayWeapon(weapon: Model)
+    local attributes: {string: any} = weapon:GetAttributes()
+            local itemDescription: string = ""
+
+            itemDescription = itemDescription .. "Damage: " .. attributes["damage"] .. "\n"
+            itemDescription = itemDescription .. "Fire Mode: " .. attributes["fireMode"] .. "\n"
+            itemDescription = itemDescription .. "Magazine Size: " .. attributes["magazineSize"] .. "\n"
+            itemDescription = itemDescription .. "Range: " .. attributes["range"] .. "\n"
+            itemDescription = itemDescription .. "Rate of Fire: " .. attributes["rateOfFire"]
+
+            if attributes["owned"] then
+                itemInfoFrame.Cost.Text = "Already Owned"
+                itemInfoFrame.PurchaseButton.PurchaseText.Text = "Owned"
+                itemInfoFrame.PurchaseButton.Interactable = false
+            else
+                itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Cash"
+                itemInfoFrame.PurchaseButton.PurchaseText.Text = "Purchase"
+                itemInfoFrame.PurchaseButton.Interactable = true
+            end
+
+            itemInfoFrame.ItemDescription.Text = itemDescription
+            itemInfoFrame.ItemName.Text = weapon.Name
+            itemInfoFrame.ItemImage.Image = weapon.TextureId
+            itemInfoFrame.Visible = true
+end
+
 local function CreateItemButtons()
     for _: number, weapon: Model in ipairs(weapons:GetChildren()) do
         local weaponButtonFrame: Frame = templateButtonFrame:Clone()
@@ -24,27 +59,13 @@ local function CreateItemButtons()
         weaponButtonFrame.Visible = true
 
         weaponButton.Activated:Connect(function()
-            local attributes: {string: any} = weapon:GetAttributes()
-            local itemDescription: string = ""
+            DisplayWeapon(weapon)
+            HighlightActiveWeapon(weaponButtonFrame)
+        end)
 
-            itemDescription = itemDescription .. "Damage: " .. attributes["damage"] .. "\n"
-            itemDescription = itemDescription .. "Fire Mode: " .. attributes["fireMode"] .. "\n"
-            itemDescription = itemDescription .. "Magazine Size: " .. attributes["magazineSize"] .. "\n"
-            itemDescription = itemDescription .. "Range: " .. attributes["range"] .. "\n"
-            itemDescription = itemDescription .. "Rate of Fire: " .. attributes["rateOfFire"]
-
-            itemInfoFrame.ItemDescription.Text = itemDescription
-            itemInfoFrame.ItemName.Text = weapon.Name
-            itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Cash"
-            itemInfoFrame.ItemImage.Image = weapon.TextureId
-            itemInfoFrame.Visible = true
-
-            if activeItemButtonFrame then
-                activeItemButtonFrame.ItemButton.UIStroke.Enabled = false
-            end
-
-            activeItemButtonFrame = weaponButtonFrame
-            activeItemButtonFrame.ItemButton.UIStroke.Enabled = true
+        weapon:GetAttributeChangedSignal("owned"):Connect(function()
+            DisplayWeapon(weapon)
+            HighlightActiveWeapon(weaponButtonFrame)
         end)
     end
 end
@@ -68,6 +89,7 @@ local function TryPurchaseWeapon(weaponName: string): boolean
 
         if success then
             print("Client-side success.")
+            weapons:FindFirstChild(weaponName):SetAttribute("owned", true)
         else
             print("Client-side failure.")
         end

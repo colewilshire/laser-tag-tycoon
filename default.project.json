@@ -18,6 +18,15 @@
             "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineProximityPrompt"
           }
         }
+      },
+      "RemoteFunctions" : {
+        "$className": "Folder",
+        "ShopGui": {
+          "$className": "Folder",
+          "TryPurchaseWeaponFunction": {
+            "$className": "RemoteFunction"
+          }
+        }
       }
     },
 

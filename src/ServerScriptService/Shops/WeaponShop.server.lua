@@ -1,3 +1,5 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local dataManager = require(ServerScriptService.Modules.DataManager)
 
@@ -19,21 +21,33 @@ local function TryAddWeapon(player: Player, weaponName: string): boolean
     return true
 end
 
-local function TryPurchaseWeapon(player: Player, weaponName: string, price: number)
+local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
+    local weapon: Model = ReplicatedStorage.Weapons:FindFirstChild(weaponName)
+    if not weapon then
+        print("Error: Weapon with given name does not exist.")
+        return false
+    end
+
     local profile: table = dataManager.Profiles[player]
     local data: {[string]: any} = profile.Data
     local cash: number = data["Cash"]
+    local cost: number = weapon:GetAttribute("cost") or 0
 
-    if cash >= price then
+    if cash >= cost then
         if TryAddWeapon(player, weaponName) then
-            cash -= price
+            cash -= cost
             print("Success: " .. cash .. " Cash remaining.")
+            return true
         else
             print("Error: Weapon already owned.")
+            return false
         end
     else
         print("Error: Insufficient funds.")
+        return false
     end
 end
 
---TryPurchaseWeapon(game:GetService("Players"):GetPlayerByUserId(31571502), "TestWeapon", 0)
+ReplicatedStorage.RemoteFunctions.ShopGui.TryPurchaseWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)
+    return TryPurchaseWeapon(player, weaponName)
+end)

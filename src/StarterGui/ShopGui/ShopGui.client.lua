@@ -6,27 +6,45 @@ local remoteEvents: Folder = scripts.Parent.RemoteEvents
 local enableGuiEvent: RemoteEvent = remoteEvents.EnableGuiEvent
 local disableGuiEvent: RemoteEvent = remoteEvents.DisableGuiEvent
 local guiFrame: Frame = shopGui.GuiFrame
+local exitButton: ImageButton = guiFrame.ExitButton
 local shopFrame: Frame = guiFrame.ShopFrame
 local itemInfoFrame: Frame = guiFrame.PurchaseFrame.ItemInfoFrame
 local scrollingFrame: ScrollingFrame = shopFrame.ScrollingFrame
-local templateButton: ImageButton = scrollingFrame.TemplateButton
+local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
+local activeItemButtonFrame: Frame
 
 local function CreateItemButtons()
     for _: number, weapon: Model in ipairs(weapons:GetChildren()) do
-        local weaponButton: ImageButton = templateButton:Clone()
-        weaponButton.Name = weapon.Name
-        weaponButton.Parent = scrollingFrame
-        weaponButton.Visible = true
+        local weaponButtonFrame: Frame = templateButtonFrame:Clone()
+        local weaponButton: ImageButton = weaponButtonFrame.ItemButton
+
+        weaponButtonFrame.Name = weapon.Name
+        weaponButtonFrame.Parent = scrollingFrame
+        weaponButton.Image = weapon.TextureId
+        weaponButtonFrame.Visible = true
 
         weaponButton.Activated:Connect(function()
             local attributes: {string: any} = weapon:GetAttributes()
+            local itemDescription: string = ""
+
+            itemDescription = itemDescription .. "Damage: " .. attributes["damage"] .. "\n"
+            itemDescription = itemDescription .. "Fire Mode: " .. attributes["fireMode"] .. "\n"
+            itemDescription = itemDescription .. "Magazine Size: " .. attributes["magazineSize"] .. "\n"
+            itemDescription = itemDescription .. "Range: " .. attributes["range"] .. "\n"
+            itemDescription = itemDescription .. "Rate of Fire: " .. attributes["rateOfFire"]
+
+            itemInfoFrame.ItemDescription.Text = itemDescription
             itemInfoFrame.ItemName.Text = weapon.Name
-            local s: string = ""
-            for key:string, value: string in pairs(attributes) do
-                s = s .. string.format("%s: %s\n", key, tostring(value))
-            end
-            itemInfoFrame.ItemDescription.Text = s
+            itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Cash"
+            itemInfoFrame.ItemImage.Image = weapon.TextureId
             itemInfoFrame.Visible = true
+
+            if activeItemButtonFrame then
+                activeItemButtonFrame.ItemButton.UIStroke.Enabled = false
+            end
+
+            activeItemButtonFrame = weaponButtonFrame
+            activeItemButtonFrame.ItemButton.UIStroke.Enabled = true
         end)
     end
 end
@@ -38,6 +56,24 @@ end
 local function CloseShop()
     shopGui.Enabled = false
     itemInfoFrame.Visible = false
+
+    if activeItemButtonFrame then
+        activeItemButtonFrame.ItemButton.UIStroke.Enabled = false
+    end
+end
+
+local function TryPurchaseWeapon(weaponName: string): boolean
+    if activeItemButtonFrame then
+        local success: boolean = ReplicatedStorage.RemoteFunctions.ShopGui.TryPurchaseWeaponFunction:InvokeServer(weaponName)
+
+        if success then
+            print("Client-side success.")
+        else
+            print("Client-side failure.")
+        end
+
+        return success
+    end
 end
 
 enableGuiEvent.OnClientEvent:Connect(function()
@@ -46,6 +82,14 @@ end)
 
 disableGuiEvent.OnClientEvent:Connect(function()
     CloseShop()
+end)
+
+exitButton.Activated:Connect(function()
+    CloseShop()
+end)
+
+itemInfoFrame.PurchaseButton.Activated:Connect(function()
+    TryPurchaseWeapon(activeItemButtonFrame.Name)
 end)
 
 CreateItemButtons()

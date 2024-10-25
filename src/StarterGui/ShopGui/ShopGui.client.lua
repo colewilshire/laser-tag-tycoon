@@ -9,8 +9,9 @@ local enableGuiEvent: RemoteEvent = remoteEvents.EnableGuiEvent
 local disableGuiEvent: RemoteEvent = remoteEvents.DisableGuiEvent
 local guiFrame: Frame = shopGui.GuiFrame
 local exitButton: ImageButton = guiFrame.ExitButton
-local shopFrame: Frame = guiFrame.ShopFrame
+local shopFrame: Frame = guiFrame.BackgroundFrame.ShopFrame
 local itemInfoFrame: Frame = guiFrame.PurchaseFrame.ItemInfoFrame
+local purchaseButton: ImageButton = itemInfoFrame.PurchaseButtonFrame.PurchaseButton
 local scrollingFrame: ScrollingFrame = shopFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
 local shopGuiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
@@ -20,14 +21,14 @@ local equippedWeaponName: string
 
 local function SetActiveItemButton(weaponButtonFrame: Frame)
     if activeItemButtonFrame then
-        activeItemButtonFrame.ItemButton.UIStroke.Enabled = false
+        activeItemButtonFrame.OutlineFrame.Visible = false
     end
 
     activeItemButtonFrame = weaponButtonFrame
-    activeItemButtonFrame.ItemButton.UIStroke.Enabled = true
+    activeItemButtonFrame.OutlineFrame.Visible = true
 end
 
-local function DisplayWeapon(weapon: Model)
+local function DisplayWeapon(weapon: Tool)
     local attributes: {string: any} = weapon:GetAttributes()
     local itemDescription: string = ""
 
@@ -39,12 +40,12 @@ local function DisplayWeapon(weapon: Model)
 
     if attributes["owned"] then
         itemInfoFrame.Cost.Text = "Already Owned"
-        itemInfoFrame.PurchaseButton.PurchaseText.Text = "Owned"
-        itemInfoFrame.PurchaseButton.Interactable = false
+        purchaseButton.PurchaseText.Text = "Owned"
+        purchaseButton.Interactable = false
     else
         itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Cash"
-        itemInfoFrame.PurchaseButton.PurchaseText.Text = "Purchase"
-        itemInfoFrame.PurchaseButton.Interactable = true
+        purchaseButton.PurchaseText.Text = "Purchase"
+        purchaseButton.Interactable = true
     end
 
     itemInfoFrame.ItemDescription.Text = itemDescription
@@ -54,7 +55,7 @@ local function DisplayWeapon(weapon: Model)
 end
 
 local function CreateItemButtons()
-    for _: number, weapon: Model in ipairs(weapons:GetChildren()) do
+    for _: number, weapon: Tool in ipairs(weapons:GetChildren()) do
         local weaponButtonFrame: Frame = templateButtonFrame:Clone()
         local weaponButton: ImageButton = weaponButtonFrame.ItemButton
 
@@ -69,8 +70,10 @@ local function CreateItemButtons()
         end)
 
         weapon:GetAttributeChangedSignal("owned"):Connect(function()
-            DisplayWeapon(weapon)
-            SetActiveItemButton(weaponButtonFrame)
+            if shopGui.Enabled then
+                DisplayWeapon(weapon)
+                SetActiveItemButton(weaponButtonFrame)
+            end
         end)
     end
 end
@@ -108,7 +111,7 @@ local function CloseShop()
     EnableBackpack()
 
     if activeItemButtonFrame then
-        activeItemButtonFrame.ItemButton.UIStroke.Enabled = false
+        activeItemButtonFrame.OutlineFrame.Visible = false
     end
 end
 
@@ -117,11 +120,8 @@ local function TryPurchaseWeapon(weaponName: string): boolean
         local success: boolean = tryPurchaseWeaponFunction:InvokeServer(weaponName)
 
         if success then
-            print("Client-side success.")
             local weapon = weapons:FindFirstChild(weaponName)
             equippedWeaponName = weapon.Name
-        else
-            print("Client-side failure.")
         end
 
         return success
@@ -140,7 +140,7 @@ exitButton.Activated:Connect(function()
     CloseShop()
 end)
 
-itemInfoFrame.PurchaseButton.Activated:Connect(function()
+purchaseButton.Activated:Connect(function()
     TryPurchaseWeapon(activeItemButtonFrame.Name)
 end)
 

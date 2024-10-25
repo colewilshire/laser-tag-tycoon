@@ -6,12 +6,6 @@
     "ReplicatedStorage": {
       "VendingMachines": {
         "$className": "Folder",
-        "VendingMachineOnTouch": {
-          "$className": "Model",
-          "Scripts": {
-            "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineOnTouch"
-          }
-        },
         "VendingMachineProximityPrompt": {
           "$className": "Model",
           "Scripts": {
@@ -31,12 +25,6 @@
     },
 
     "Workspace": {
-      "VendingMachineOnTouch": {
-        "$className": "Model",
-        "Scripts": {
-          "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineOnTouch"
-        }
-      },
       "VendingMachineProximityPrompt": {
           "$className": "Model",
           "Scripts": {

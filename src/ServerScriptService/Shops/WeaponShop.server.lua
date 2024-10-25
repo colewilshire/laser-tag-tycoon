@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local dataManager = require(ServerScriptService.Modules.DataManager)
@@ -90,7 +91,7 @@ shopGuiRemoteFunctions.TryPurchaseWeaponFunction.OnServerInvoke = (function(play
     return TryPurchaseWeapon(player, weaponName)
 end)
 
-game:GetService("Players").PlayerAdded:Connect(function(player: Player)
+Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function()
         EquipOwnedWeapons(player)
     end)

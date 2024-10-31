@@ -1,38 +1,58 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
-local dataManager = require(ServerScriptService.Modules.DataManager)
+local dataManager: table = require(ServerScriptService.Modules.DataManager)
+local weapons: Folder = ReplicatedStorage.Weapons
 local shopGuiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
 
 local function TryAddWeapon(player: Player, weaponName: string): boolean
+    local weapon = weapons:FindFirstChild(weaponName)
+    if weapon == nil then return false end
+
+    local weaponType = weapon:GetAttribute("weaponType")
+    if weaponType == nil then return false end
+
     local profile: table = dataManager.Profiles[player]
     local data: {[string]: any} = profile.Data
-    local weapons: {[string]: boolean} = data["Weapons"]
+    local ownedWeapons: {[string]: {[string]: boolean}} = data["Weapons"]
+    local weaponVariants: {[string]: boolean} = ownedWeapons and ownedWeapons[weaponType] or nil
+    local isOwned: boolean = weaponVariants and weaponVariants[weaponName] or nil
 
-    if weapons then
-        if not weapons[weaponName] then
-            weapons[weaponName] = true
-        else
-            return false
-        end
+    if isOwned then
+        return false
+    elseif weaponVariants then
+        weaponVariants[weaponName] = true
+    elseif ownedWeapons then
+        ownedWeapons[weaponType] = {[weaponName] = true}
     else
-        data["Weapons"] = {[weaponName] = true}
+        data["Weapons"] = {[weaponType] = {[weaponName] = true}}
     end
 
     return true
 end
 
 local function EquipWeapon(player: Player, weaponName: string)
-    local weaponTemplate: Tool = ReplicatedStorage.Weapons:FindFirstChild(weaponName)
+    local profile: table = dataManager.Profiles[player]
+    local data: {[string]: any} = profile.Data
+    local equippedWeapons: {[string]: {[string]: boolean}} = data["Equipped"]
+    local weaponTemplate: Tool = weapons:FindFirstChild(weaponName)
 
     if weaponTemplate then
         local weapon: Tool = weaponTemplate:Clone()
+        local weaponType: string = weapon:GetAttribute("weaponType")
+
         weapon.Parent = player.Backpack
+
+        if equippedWeapons then
+            equippedWeapons[weaponType] = weaponName
+        else
+            equippedWeapons = {[weaponType] = weaponName}
+        end
     end
 end
 
 local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
-    local weapon: Tool = ReplicatedStorage.Weapons:FindFirstChild(weaponName)
+    local weapon: Tool = weapons:FindFirstChild(weaponName)
     if not weapon then
         print("Error: Weapon with given name does not exist.")
         return false
@@ -59,7 +79,7 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
     end
 end
 
-local function GetOwnedWeapons(player: Player): {[string]: boolean}
+local function GetEquippedWeapons(player: Player): {[string]: string}
     while not dataManager.Profiles[player] do
         task.wait(1)
     end
@@ -67,18 +87,18 @@ local function GetOwnedWeapons(player: Player): {[string]: boolean}
     local profile: table = dataManager.Profiles[player]
     local data: {[string]: any} = profile.Data
 
-    if not data["Weapons"] then
-        data["Weapons"] = {}
+    if not data["Equipped"] then
+        data["Equipped"] = {}
     end
 
-    return data["Weapons"]
+    return data["Equipped"]
 end
 
-local function EquipOwnedWeapons(player: Player)
-    local ownedWeapons: {[string]: boolean} = GetOwnedWeapons(player)
-    local firstWeaponName: string = next(ownedWeapons)
+local function EquipEquippedWeapons(player: Player)
+    local equippedWeapons: {[string]: {[string]: string}} = GetEquippedWeapons(player)
+    local firstWeaponName: string = equippedWeapons[next(equippedWeapons)]
 
-    for weaponName: string, _: boolean in pairs(ownedWeapons) do
+    for _: string, weaponName: string in pairs(equippedWeapons) do
         EquipWeapon(player, weaponName)
     end
 
@@ -93,6 +113,6 @@ end)
 
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function()
-        EquipOwnedWeapons(player)
+        EquipEquippedWeapons(player)
     end)
 end)

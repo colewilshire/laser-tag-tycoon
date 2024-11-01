@@ -15,7 +15,8 @@ local purchaseButton: ImageButton = itemInfoFrame.PurchaseButtonFrame.PurchaseBu
 local scrollingFrame: ScrollingFrame = shopFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
 local shopGuiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
-local tryPurchaseWeaponFunction: RemoteFunction = shopGuiRemoteFunctions. TryPurchaseWeaponFunction
+local tryPurchaseWeaponFunction: RemoteFunction = shopGuiRemoteFunctions.TryPurchaseWeaponFunction
+local getOwnedWeaponsFunction: RemoteFunction = shopGuiRemoteFunctions.GetOwnedWeaponsFunction
 local activeItemButtonFrame: Frame
 local equippedWeaponName: string
 
@@ -54,7 +55,7 @@ local function DisplayWeapon(weapon: Tool)
     itemInfoFrame.Visible = true
 end
 
-local function CreateItemButtons()
+local function InitializeGui()
     for _: number, weapon: Tool in ipairs(weapons:GetChildren()) do
         local weaponButtonFrame: Frame = templateButtonFrame:Clone()
         local weaponButton: ImageButton = weaponButtonFrame.ItemButton
@@ -121,10 +122,27 @@ local function TryPurchaseWeapon(weaponName: string): boolean
 
         if success then
             local weapon = weapons:FindFirstChild(weaponName)
+            weapon:SetAttribute("owned", true)
             equippedWeaponName = weapon.Name
         end
 
         return success
+    end
+
+    return false
+end
+
+local function GetOwnedWeapons()
+    local ownedWeapons: {[string]: {[string]: boolean}} = getOwnedWeaponsFunction:InvokeServer()
+
+    for _: string, weaponVariants: {[string]: boolean} in pairs(ownedWeapons) do
+        for weaponName: string, _: boolean in pairs(weaponVariants) do
+            local weapon: Tool = weapons:FindFirstChild(weaponName)
+
+            if weapon then
+                weapon:SetAttribute("owned", true)
+            end
+        end
     end
 end
 
@@ -144,12 +162,5 @@ purchaseButton.Activated:Connect(function()
     TryPurchaseWeapon(activeItemButtonFrame.Name)
 end)
 
-Players.LocalPlayer.Backpack.ChildAdded:Connect(function(child: Instance)
-    local weapon: Tool = weapons:FindFirstChild(child.Name)
-
-    if weapon then
-        weapon:SetAttribute("owned", true)
-    end
-end)
-
-CreateItemButtons()
+GetOwnedWeapons()
+InitializeGui()

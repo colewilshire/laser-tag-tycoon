@@ -17,6 +17,9 @@
         "$className": "Folder",
         "ShopGui": {
           "$className": "Folder",
+          "GetOwnedWeaponsFunction": {
+            "$className": "RemoteFunction"
+          },
           "TryPurchaseWeaponFunction": {
             "$className": "RemoteFunction"
           }

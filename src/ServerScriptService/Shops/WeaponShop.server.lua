@@ -41,13 +41,20 @@ local function EquipWeapon(player: Player, weaponName: string)
         local weapon: Tool = weaponTemplate:Clone()
         local weaponType: string = weapon:GetAttribute("weaponType")
 
-        weapon.Parent = player.Backpack
-
         if equippedWeapons then
+            local currentWeaponName: string = equippedWeapons[weaponType]
+            local currentWeapon: Tool = currentWeaponName and player.Backpack:FindFirstChild(currentWeaponName)
+
+            if currentWeapon then
+                currentWeapon:Destroy()
+            end
+
             equippedWeapons[weaponType] = weaponName
         else
             equippedWeapons = {[weaponType] = weaponName}
         end
+
+        weapon.Parent = player.Backpack
     end
 end
 
@@ -77,6 +84,21 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
         print("Error: Insufficient funds.")
         return false
     end
+end
+
+local function GetOwnedWeapons(player: Player): {[string]: {[string]: boolean}}
+    while not dataManager.Profiles[player] do
+        task.wait(1)
+    end
+
+    local profile: table = dataManager.Profiles[player]
+    local data: {[string]: any} = profile.Data
+
+    if not data["Weapons"] then
+        data["Weapons"] = {}
+    end
+
+    return data["Weapons"]
 end
 
 local function GetEquippedWeapons(player: Player): {[string]: string}
@@ -109,6 +131,10 @@ end
 
 shopGuiRemoteFunctions.TryPurchaseWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)
     return TryPurchaseWeapon(player, weaponName)
+end)
+
+shopGuiRemoteFunctions.GetOwnedWeaponsFunction.OnServerInvoke = (function(player: Player)
+    return GetOwnedWeapons(player)
 end)
 
 Players.PlayerAdded:Connect(function(player: Player)

@@ -22,18 +22,19 @@
           },
           "TryPurchaseWeaponFunction": {
             "$className": "RemoteFunction"
+          },
+          "TryEquipWeaponFunction": {
+            "$className": "RemoteFunction"
           }
+        }
+      },
+      "Modules" : {
+        "$className": "Folder",
+        "Inventory": {
+          "$className": "Folder",
+          "$path": "src/ReplicatedStorage/Modules/Inventory"
         }
       }
-    },
-
-    "Workspace": {
-      "VendingMachineProximityPrompt": {
-          "$className": "Model",
-          "Scripts": {
-            "$path": "src/ReplicatedStorage/VendingMachines/VendingMachineProximityPrompt"
-          }
-        }
     },
 
     "ServerScriptService": {
@@ -59,10 +60,10 @@
           "$path": "src/StarterGui/ShopGui"
         }
       },
-      "SkinGui": {
+      "InventoryGui": {
         "$className": "ScreenGui",
         "Scripts": {
-          "$path": "src/StarterGui/SkinGui"
+          "$path": "src/StarterGui/InventoryGui"
         }
       }
     }

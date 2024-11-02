@@ -1,21 +1,19 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local Inventory = require(ReplicatedStorage.Modules.Inventory.Inventory)
 local weapons: Folder = ReplicatedStorage.Weapons
 local scripts: Folder = script.Parent
 local gui: ScreenGui = scripts.Parent
-local remoteEvents: Folder = gui.RemoteEvents
-local enableGuiEvent: RemoteEvent = remoteEvents.EnableGuiEvent
-local disableGuiEvent: RemoteEvent = remoteEvents.DisableGuiEvent
 local guiFrame: Frame = gui.GuiFrame
 local exitButton: ImageButton = guiFrame.ExitButton
-local shopFrame: Frame = guiFrame.BackgroundFrame.ShopFrame
-local itemInfoFrame: Frame = guiFrame.PurchaseFrame.ItemInfoFrame
-local purchaseButton: ImageButton = itemInfoFrame.PurchaseButtonFrame.PurchaseButton
-local scrollingFrame: ScrollingFrame = shopFrame.ScrollingFrame
+local inventoryFrame: Frame = guiFrame.BackgroundFrame.InventoryFrame
+local itemInfoFrame: Frame = guiFrame.EquipFrame.ItemInfoFrame
+local equipButton: ImageButton = itemInfoFrame.EquipButtonFrame.EquipButton
+local scrollingFrame: ScrollingFrame = inventoryFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
 local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
-local tryPurchaseWeaponFunction: RemoteFunction = guiRemoteFunctions.TryPurchaseWeaponFunction
+local tryEquipWeaponFunction: RemoteFunction = guiRemoteFunctions.TryEquipWeaponFunction
 local activeItemButtonFrame: Frame
 local equippedWeaponName: string
 
@@ -38,14 +36,14 @@ local function DisplayWeapon(weapon: Tool)
     itemDescription = itemDescription .. "Range: " .. attributes["range"] .. "\n"
     itemDescription = itemDescription .. "Rate of Fire: " .. attributes["rateOfFire"]
 
-    if attributes["owned"] then
-        itemInfoFrame.Cost.Text = "Already Owned"
-        purchaseButton.PurchaseText.Text = "Owned"
-        purchaseButton.Interactable = false
+    if Players.LocalPlayer.Backpack:FindFirstChild(weapon.Name) then
+        --itemInfoFrame.Cost.Text = "Already Owned"
+        equipButton.EquipText.Text = "Equipped"
+        equipButton.Interactable = false
     else
-        itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Cash"
-        purchaseButton.PurchaseText.Text = "Purchase"
-        purchaseButton.Interactable = true
+        --itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Cash"
+        equipButton.EquipText.Text = "Equip"
+        equipButton.Interactable = true
     end
 
     itemInfoFrame.ItemDescription.Text = itemDescription
@@ -93,9 +91,9 @@ local function Close()
     end
 end
 
-local function TryPurchaseWeapon(weaponName: string): boolean
+local function TryEquipWeapon(weaponName: string): boolean
     if activeItemButtonFrame then
-        local success: boolean = tryPurchaseWeaponFunction:InvokeServer(weaponName)
+        local success: boolean = tryEquipWeaponFunction:InvokeServer(weaponName)
 
         if success then
             local weapon = weapons:FindFirstChild(weaponName)
@@ -109,20 +107,34 @@ local function TryPurchaseWeapon(weaponName: string): boolean
     return false
 end
 
-enableGuiEvent.OnClientEvent:Connect(function()
-    Open()
-end)
+-- enableGuiEvent.OnClientEvent:Connect(function()
+--     Open()
+-- end)
 
-disableGuiEvent.OnClientEvent:Connect(function()
-    Close()
-end)
+-- disableGuiEvent.OnClientEvent:Connect(function()
+--     Close()
+-- end)
 
 exitButton.Activated:Connect(function()
     Close()
 end)
 
-purchaseButton.Activated:Connect(function()
-    TryPurchaseWeapon(activeItemButtonFrame.Name)
+equipButton.Activated:Connect(function()
+    TryEquipWeapon(activeItemButtonFrame.Name)
+end)
+
+UserInputService.InputBegan:Connect(function(inputObject: InputObject)
+    if inputObject.KeyCode == Enum.KeyCode.I then
+        if not gui.Enabled then
+            Open()
+        else
+            Close()
+        end
+    end
+end)
+
+Players.LocalPlayer.Backpack.ChildAdded:Connect(function(child: Instance)
+    
 end)
 
 InitializeGui()

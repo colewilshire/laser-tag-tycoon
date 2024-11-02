@@ -65,6 +65,12 @@
         "Scripts": {
           "$path": "src/StarterGui/InventoryGui"
         }
+      },
+      "InventoryButtonGui": {
+        "$className": "ScreenGui",
+        "Scripts": {
+          "$path": "src/StarterGui/InventoryButtonGui"
+        }
       }
     }
   }

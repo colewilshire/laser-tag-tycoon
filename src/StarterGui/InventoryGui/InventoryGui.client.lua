@@ -105,14 +105,6 @@ local function TryEquipWeapon(weaponName: string): boolean
     return false
 end
 
--- enableGuiEvent.OnClientEvent:Connect(function()
---     Open()
--- end)
-
--- disableGuiEvent.OnClientEvent:Connect(function()
---     Close()
--- end)
-
 exitButton.Activated:Connect(function()
     Close()
 end)
@@ -122,7 +114,7 @@ equipButton.Activated:Connect(function()
 end)
 
 UserInputService.InputBegan:Connect(function(inputObject: InputObject)
-    if inputObject.KeyCode == Enum.KeyCode.I then
+    if inputObject.KeyCode == Enum.KeyCode.I or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
         if not gui.Enabled then
             Open()
         else

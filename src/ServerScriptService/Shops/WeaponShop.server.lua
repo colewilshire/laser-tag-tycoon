@@ -4,7 +4,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local dataManager: table = require(ServerScriptService.Modules.DataManager)
 local weapons: Folder = ReplicatedStorage.Weapons
 local shopGuiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
-local shadowBackpack: Folder
+local inventory: Folder
 
 local function TryAddWeapon(player: Player, weaponName: string): boolean
     local weapon = weapons:FindFirstChild(weaponName)
@@ -40,7 +40,7 @@ local function EquipWeapon(player: Player, weaponName: string)
     local backpack: Backpack = player.Backpack
 
     if weaponTemplate then
-        local weapon: Tool = shadowBackpack:FindFirstChild(weaponName) or weaponTemplate:Clone()
+        local weapon: Tool = inventory:FindFirstChild(weaponName) or weaponTemplate:Clone()
         local weaponType: string = weapon:GetAttribute("weaponType")
 
         if equippedWeapons then
@@ -50,7 +50,7 @@ local function EquipWeapon(player: Player, weaponName: string)
                 local currentWeapon: Tool = backpack:FindFirstChild(currentWeaponName)
 
                 if currentWeapon then
-                    currentWeapon.Parent = shadowBackpack
+                    currentWeapon.Parent = inventory
                 end
             end
 
@@ -61,47 +61,6 @@ local function EquipWeapon(player: Player, weaponName: string)
 
         weapon.Parent = backpack
     end
-end
-
-local function EquipWeaponFromShadowBackpack(player: Player, weaponName: string)
-    local profile: table = dataManager.Profiles[player]
-    local data: {[string]: any} = profile.Data
-    local equippedWeapons: {[string]: {[string]: boolean}} = data["Equipped"]
-    local weapon: Tool = shadowBackpack:FindFirstChild(weaponName)
-    local backpack: Backpack = player.Backpack
-
-    if weapon then
-        --local weapon: Tool = weaponTemplate:Clone()
-        local weaponType: string = weapon:GetAttribute("weaponType")
-
-        if equippedWeapons then
-            local currentWeaponName: string = equippedWeapons[weaponType]
-            local currentWeapon: Tool = currentWeaponName and backpack:FindFirstChild(currentWeaponName)
-
-            if currentWeapon then
-                --currentWeapon:Destroy()
-                currentWeapon.Parent = shadowBackpack
-            end
-
-            equippedWeapons[weaponType] = weaponName
-        else
-            equippedWeapons = {[weaponType] = weaponName}
-        end
-
-        weapon.Parent = backpack
-    end
-end
-
--- local function EquipWeaponFromShadowBackpack(player: Player, weaponName: string)
---     local weapon = shadowBackpack:FindFirstChild(weaponName)
-
---     if weapon then
---         weapon.Parent = player.Backpack
---     end
--- end
-
-local function TryEquipWeapon(player: Player, weaponName: string)
-
 end
 
 local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
@@ -162,26 +121,13 @@ local function GetEquippedWeapons(player: Player): {[string]: string}
     return data["Equipped"]
 end
 
-local function EquipEquippedWeapons(player: Player)
-    local equippedWeapons: {[string]: {[string]: string}} = GetEquippedWeapons(player)
-    local firstWeaponName: string = equippedWeapons[next(equippedWeapons)]
-
-    for _: string, weaponName: string in pairs(equippedWeapons) do
-        EquipWeapon(player, weaponName)
-    end
-
-    if firstWeaponName then
-        player.Character.Humanoid:EquipTool(player.Backpack:FindFirstChild(firstWeaponName))
-    end
-end
-
 local function EquipOwnedWeapons(player: Player)
     local ownedWeapons: {[string]: {[string]: boolean}} = GetOwnedWeapons(player)
     local equippedWeapons: {[string]: {[string]: string}} = GetEquippedWeapons(player)
 
-    shadowBackpack = Instance.new("Folder")
-    shadowBackpack.Name = "ShadowBackpack"
-    shadowBackpack.Parent = player
+    inventory = Instance.new("Folder")
+    inventory.Name = "Inventory"
+    inventory.Parent = player
 
     for _: string, weaponVariants: {[string]: boolean} in pairs(ownedWeapons) do
         for weaponName: string, _: boolean in pairs(weaponVariants) do
@@ -189,13 +135,13 @@ local function EquipOwnedWeapons(player: Player)
             local weapon: Tool = weaponTemplate and weaponTemplate:Clone()
 
             if weapon then
-                weapon.Parent = shadowBackpack
+                weapon.Parent = inventory
             end
         end
     end
 
     for _: string, weaponName: string in pairs(equippedWeapons) do
-        local weapon = shadowBackpack:FindFirstChild(weaponName)
+        local weapon = inventory:FindFirstChild(weaponName)
 
         if weapon then
             weapon.Parent = player.Backpack
@@ -217,11 +163,11 @@ end)
 
 shopGuiRemoteFunctions.TryEquipWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)
     EquipWeapon(player, weaponName)
+    return true
 end)
 
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function()
-        --EquipEquippedWeapons(player)
         EquipOwnedWeapons(player)
     end)
 end)

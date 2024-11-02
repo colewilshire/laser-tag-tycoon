@@ -37,11 +37,9 @@ local function DisplayWeapon(weapon: Tool)
     itemDescription = itemDescription .. "Rate of Fire: " .. attributes["rateOfFire"]
 
     if Players.LocalPlayer.Backpack:FindFirstChild(weapon.Name) then
-        --itemInfoFrame.Cost.Text = "Already Owned"
         equipButton.EquipText.Text = "Equipped"
         equipButton.Interactable = false
     else
-        --itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Cash"
         equipButton.EquipText.Text = "Equip"
         equipButton.Interactable = true
     end
@@ -67,7 +65,7 @@ local function InitializeGui()
             SetActiveItemButton(weaponButtonFrame)
         end)
 
-        weapon:GetAttributeChangedSignal("owned"):Connect(function()
+        weapon:GetAttributeChangedSignal("equipped"):Connect(function()
             if gui.Enabled then
                 DisplayWeapon(weapon)
                 SetActiveItemButton(weaponButtonFrame)
@@ -97,7 +95,7 @@ local function TryEquipWeapon(weaponName: string): boolean
 
         if success then
             local weapon = weapons:FindFirstChild(weaponName)
-            weapon:SetAttribute("owned", true)
+            weapon:SetAttribute("equipped", true)
             equippedWeaponName = weapon.Name
         end
 
@@ -134,7 +132,11 @@ UserInputService.InputBegan:Connect(function(inputObject: InputObject)
 end)
 
 Players.LocalPlayer.Backpack.ChildAdded:Connect(function(child: Instance)
-    
+    child:SetAttribute("equipped", true)
+end)
+
+Players.LocalPlayer.Backpack.ChildRemoved:Connect(function(child: Instance)
+    child:SetAttribute("equipped", nil)
 end)
 
 InitializeGui()

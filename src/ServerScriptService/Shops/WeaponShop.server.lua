@@ -1,10 +1,25 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
-local dataManager: table = require(ServerScriptService.Modules.DataManager)
+local DataManager: table = require(ServerScriptService.Modules.DataManager)
 local weapons: Folder = ReplicatedStorage.Weapons
 local shopGuiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
 local inventory: Folder
+
+local function GetOwnedWeapons(player: Player): {[string]: {[string]: boolean}}
+    while not DataManager.Profiles[player] do
+        task.wait(1)
+    end
+
+    local profile: table = DataManager.Profiles[player]
+    local data: {[string]: any} = profile.Data
+
+    if not data["Weapons"] then
+        data["Weapons"] = {}
+    end
+
+    return data["Weapons"]
+end
 
 local function TryAddWeapon(player: Player, weaponName: string): boolean
     local weapon = weapons:FindFirstChild(weaponName)
@@ -13,7 +28,7 @@ local function TryAddWeapon(player: Player, weaponName: string): boolean
     local weaponType = weapon:GetAttribute("weaponType")
     if weaponType == nil then return false end
 
-    local profile: table = dataManager.Profiles[player]
+    local profile: table = DataManager.Profiles[player]
     local data: {[string]: any} = profile.Data
     local ownedWeapons: {[string]: {[string]: boolean}} = data["Weapons"]
     local weaponVariants: {[string]: boolean} = ownedWeapons and ownedWeapons[weaponType] or nil
@@ -32,9 +47,10 @@ local function TryAddWeapon(player: Player, weaponName: string): boolean
     return true
 end
 
-local function EquipWeapon(player: Player, weaponName: string)
-    local profile: table = dataManager.Profiles[player]
+local function TryEquipWeapon(player: Player, weaponName: string): boolean
+    local profile: table = DataManager.Profiles[player]
     local data: {[string]: any} = profile.Data
+    local ownedWeapons: {[string]: {[string]: boolean}} = GetOwnedWeapons(player)
     local equippedWeapons: {[string]: {[string]: boolean}} = data["Equipped"]
     local weaponTemplate: Tool = weapons:FindFirstChild(weaponName)
     local backpack: Backpack = player.Backpack
@@ -42,6 +58,10 @@ local function EquipWeapon(player: Player, weaponName: string)
     if weaponTemplate then
         local weapon: Tool = inventory:FindFirstChild(weaponName) or weaponTemplate:Clone()
         local weaponType: string = weapon:GetAttribute("weaponType")
+
+        if not (ownedWeapons and ownedWeapons[weaponType] and ownedWeapons[weaponType][weaponName]) then
+            return false
+        end
 
         if equippedWeapons then
             local currentWeaponName: string = equippedWeapons[weaponType]
@@ -60,7 +80,10 @@ local function EquipWeapon(player: Player, weaponName: string)
         end
 
         weapon.Parent = backpack
+        return true
     end
+
+    return false
 end
 
 local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
@@ -70,7 +93,7 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
         return false
     end
 
-    local profile: table = dataManager.Profiles[player]
+    local profile: table = DataManager.Profiles[player]
     local data: {[string]: any} = profile.Data
     local cash: number = data["Cash"]
     local cost: number = weapon:GetAttribute("cost") or 0
@@ -78,7 +101,7 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
     if cash >= cost then
         if TryAddWeapon(player, weaponName) then
             cash -= cost
-            EquipWeapon(player, weaponName)
+            TryEquipWeapon(player, weaponName)
             print("Success: " .. cash .. " Cash remaining.")
             return true
         else
@@ -91,27 +114,12 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
     end
 end
 
-local function GetOwnedWeapons(player: Player): {[string]: {[string]: boolean}}
-    while not dataManager.Profiles[player] do
-        task.wait(1)
-    end
-
-    local profile: table = dataManager.Profiles[player]
-    local data: {[string]: any} = profile.Data
-
-    if not data["Weapons"] then
-        data["Weapons"] = {}
-    end
-
-    return data["Weapons"]
-end
-
 local function GetEquippedWeapons(player: Player): {[string]: string}
-    while not dataManager.Profiles[player] do
+    while not DataManager.Profiles[player] do
         task.wait(1)
     end
 
-    local profile: table = dataManager.Profiles[player]
+    local profile: table = DataManager.Profiles[player]
     local data: {[string]: any} = profile.Data
 
     if not data["Equipped"] then
@@ -162,8 +170,7 @@ shopGuiRemoteFunctions.GetOwnedWeaponsFunction.OnServerInvoke = (function(player
 end)
 
 shopGuiRemoteFunctions.TryEquipWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)
-    EquipWeapon(player, weaponName)
-    return true
+    return TryEquipWeapon(player, weaponName)
 end)
 
 Players.PlayerAdded:Connect(function(player: Player)

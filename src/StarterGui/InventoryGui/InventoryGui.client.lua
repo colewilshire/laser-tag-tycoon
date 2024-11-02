@@ -50,26 +50,36 @@ local function DisplayWeapon(weapon: Tool)
     itemInfoFrame.Visible = true
 end
 
-local function InitializeGui()
-    for _: number, weapon: Tool in ipairs(weapons:GetChildren()) do
-        local weaponButtonFrame: Frame = templateButtonFrame:Clone()
-        local weaponButton: ImageButton = weaponButtonFrame.ItemButton
+local function CreateWeaponButton(weapon: Tool)
+    local weaponButtonFrame: Frame = templateButtonFrame:Clone()
+    local weaponButton: ImageButton = weaponButtonFrame.ItemButton
 
-        weaponButtonFrame.Name = weapon.Name
-        weaponButtonFrame.Parent = scrollingFrame
-        weaponButton.Image = weapon.TextureId
-        weaponButtonFrame.Visible = true
+    weaponButtonFrame.Name = weapon.Name
+    weaponButtonFrame.Parent = scrollingFrame
+    weaponButton.Image = weapon.TextureId
+    weaponButtonFrame.Visible = true
 
-        weaponButton.Activated:Connect(function()
+    weaponButton.Activated:Connect(function()
+        DisplayWeapon(weapon)
+        SetActiveItemButton(weaponButtonFrame)
+    end)
+
+    weapon:GetAttributeChangedSignal("equipped"):Connect(function()
+        if gui.Enabled then
             DisplayWeapon(weapon)
             SetActiveItemButton(weaponButtonFrame)
-        end)
+        end
+    end)
+end
 
-        weapon:GetAttributeChangedSignal("equipped"):Connect(function()
-            if gui.Enabled then
-                DisplayWeapon(weapon)
-                SetActiveItemButton(weaponButtonFrame)
-            end
+local function InitializeGui()
+    for _: number, weapon: Tool in ipairs(weapons:GetChildren()) do
+        if weapon:GetAttribute("owned") == true then
+            CreateWeaponButton(weapon)
+        end
+
+        weapon:GetAttributeChangedSignal("owned"):Connect(function()
+            CreateWeaponButton(weapon)
         end)
     end
 end

@@ -34,6 +34,15 @@
           "$className": "Folder",
           "$path": "src/ReplicatedStorage/Modules/Inventory"
         }
+      },
+      "Teleporters": {
+        "$className": "Folder",
+        "Teleporter": {
+          "$className": "Model",
+          "Scripts": {
+            "$path": "src/ReplicatedStorage/Teleporter"
+          }
+        }
       }
     },
 

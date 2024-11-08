@@ -4,7 +4,7 @@ local vendingMachine: Model = scripts.Parent
 local proximityTrigger: Part = vendingMachine.ProximityTrigger
 local hitbox: Part = proximityTrigger.Hitbox
 
-hitbox.Touched:Connect(function(otherPart)
+hitbox.Touched:Connect(function(otherPart: BasePart)
     local character: Model = otherPart.Parent
     local player: Player = Players:GetPlayerFromCharacter(character)
 
@@ -13,7 +13,7 @@ hitbox.Touched:Connect(function(otherPart)
     end
 end)
 
-hitbox.TouchEnded:Connect(function(otherPart)
+hitbox.TouchEnded:Connect(function(otherPart: BasePart)
     local character: Model = otherPart.Parent
     local player: Player = Players:GetPlayerFromCharacter(character)
 

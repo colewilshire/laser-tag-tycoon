@@ -3,6 +3,16 @@
   "tree": {
     "$className": "DataModel",
 
+    "Workspace": {
+      "Teleporter": {
+        "$className": "Model",
+        "Scripts": {
+          "$className": "Folder",
+          "$path": "src/ReplicatedStorage/Teleporter"
+        }
+      }
+    },
+
     "ReplicatedStorage": {
       "VendingMachines": {
         "$className": "Folder",

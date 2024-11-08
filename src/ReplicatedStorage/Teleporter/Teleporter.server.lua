@@ -12,10 +12,29 @@ local timerText: TextLabel = timerGui.TimerText
 local playerCountText: TextLabel = timerGui.PlayerCountText
 local timerThread: thread
 
-local function formatTime(timeRemaining: number)
+local function FormatTime(timeRemaining: number)
     local minutes: number = math.floor(timeRemaining / 60)
     local seconds: number = timeRemaining % 60
     return string.format("%02d:%02d", minutes, seconds)
+end
+
+local function AddPlayerToLobby(player: Player)
+    playersInLobby[player] = true
+    currentPlayers += 1
+    playerCountText.Text = currentPlayers .. " / " .. maxPlayers
+end
+
+local function RemovePlayerFromLobby(player: Player)
+    playersInLobby[player] = nil
+    currentPlayers -= 1
+    playerCountText.Text = currentPlayers .. " / " .. maxPlayers
+end
+
+local function CancelTimer()
+    coroutine.close(timerThread)
+    playerCountText.Text = currentPlayers .. " / " .. maxPlayers
+    timerText.Text = "(Need at least two people to start)"
+    timerThread = nil
 end
 
 local function OnTimerEnd()
@@ -25,14 +44,14 @@ local function OnTimerEnd()
 
     playersInLobby = {}
     currentPlayers = 0
-    timerText.Visible = false
     playerCountText.Text = currentPlayers .. " / " .. maxPlayers
+    timerText.Text = "(Need at least two people to start)"
     timerThread = nil
 end
 
 local function StartTimer()
     for i: number = timerLength, 0, -1 do
-        timerText.Text = formatTime(i)
+        timerText.Text = FormatTime(i)
         task.wait(1)
     end
 
@@ -47,16 +66,16 @@ local function OnTouch(otherPart: BasePart)
         return
     end
 
-    if next(playersInLobby) == nil then
-        timerText.Visible = true
+    local lastPlayer: Player? = next(playersInLobby)
+    local secondToLastPlayer: Player? = lastPlayer and next(playersInLobby, lastPlayer)
+
+    if lastPlayer and secondToLastPlayer == nil then
         timerThread = coroutine.create(StartTimer)
 
         coroutine.resume(timerThread)
     end
 
-    playersInLobby[player] = true
-    currentPlayers += 1
-    playerCountText.Text = currentPlayers .. " / " .. maxPlayers
+    AddPlayerToLobby(player)
 end
 
 local function OnExit(otherPart: BasePart)
@@ -67,13 +86,13 @@ local function OnExit(otherPart: BasePart)
         return
     end
 
-    playersInLobby[player] = nil
-    currentPlayers -= 1
-    playerCountText.Text = currentPlayers .. " / " .. maxPlayers
+    RemovePlayerFromLobby(player)
 
-    if next(playersInLobby) == nil and timerThread then
-        coroutine.close(timerThread)
-        OnTimerEnd()
+    local lastPlayer: Player? = next(playersInLobby)
+    local secondToLastPlayer: Player? = lastPlayer and next(playersInLobby, lastPlayer)
+
+    if secondToLastPlayer == nil and timerThread then
+        CancelTimer()
     end
 end
 
@@ -83,6 +102,12 @@ end)
 
 exit.Touched:Connect(function(otherPart: BasePart)
     OnExit(otherPart)
+end)
+
+Players.PlayerRemoving:Connect(function(player: Player)
+    if playersInLobby[player] then
+        RemovePlayerFromLobby(player)
+    end
 end)
 
 playerCountText.Text = currentPlayers .. " / " .. maxPlayers

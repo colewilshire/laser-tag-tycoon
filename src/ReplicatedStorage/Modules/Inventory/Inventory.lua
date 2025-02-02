@@ -47,6 +47,6 @@ function Inventory.DisableBackpack(player: Player): string?
     return equippedWeapon["Name"]
 end
 
-Inventory["OwnedWeapons"] = GetOwnedWeapons()
+--Inventory["OwnedWeapons"] = GetOwnedWeapons()
 
 return Inventory

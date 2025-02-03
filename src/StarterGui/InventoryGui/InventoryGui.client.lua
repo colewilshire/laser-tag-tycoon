@@ -12,7 +12,7 @@ local itemInfoFrame: Frame = guiFrame.EquipFrame.ItemInfoFrame
 local equipButton: ImageButton = itemInfoFrame.EquipButtonFrame.EquipButton
 local scrollingFrame: ScrollingFrame = inventoryFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
-local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
+local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.Gui
 local tryEquipWeaponFunction: RemoteFunction = guiRemoteFunctions.TryEquipWeaponFunction
 local activeItemButtonFrame: Frame
 local equippedWeaponName: string
@@ -28,13 +28,13 @@ end
 
 local function DisplayWeapon(weapon: Tool)
     local attributes: {string: any} = weapon:GetAttributes()
-    local itemDescription: string = ""
-
-    itemDescription = itemDescription .. "Damage: " .. attributes["damage"] .. "\n"
-    itemDescription = itemDescription .. "Fire Mode: " .. attributes["fireMode"] .. "\n"
-    itemDescription = itemDescription .. "Magazine Size: " .. attributes["magazineSize"] .. "\n"
-    itemDescription = itemDescription .. "Range: " .. attributes["range"] .. "\n"
-    itemDescription = itemDescription .. "Rate of Fire: " .. attributes["rateOfFire"]
+    local itemDescription: string = attributes["description"] or
+        string.format("Damage: %d\nFire Mode: %s\nMagazine Size: %d\nRange: %d\nRate of Fire: %d",
+        attributes["damage"],
+        attributes["fireMode"],
+        attributes["magazineSize"],
+        attributes["range"],
+        attributes["rateOfFire"])
 
     if Players.LocalPlayer.Backpack:FindFirstChild(weapon.Name) then
         equipButton.EquipText.Text = "Equipped"
@@ -45,7 +45,7 @@ local function DisplayWeapon(weapon: Tool)
     end
 
     itemInfoFrame.ItemDescription.Text = itemDescription
-    itemInfoFrame.ItemName.Text = weapon.Name
+    itemInfoFrame.ItemName.Text = attributes["displayName"] or weapon.Name
     itemInfoFrame.ItemImage.Image = weapon.TextureId
     itemInfoFrame.Visible = true
 end

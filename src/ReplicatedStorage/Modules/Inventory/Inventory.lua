@@ -1,15 +1,15 @@
 local StarterGui = game:GetService("StarterGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local weapons: Folder = ReplicatedStorage.Weapons
-local shopGuiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.ShopGui
-local getOwnedWeaponsFunction: RemoteFunction = shopGuiRemoteFunctions.GetOwnedWeaponsFunction
+local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.Gui
+local getOwnedWeaponsFunction: RemoteFunction = guiRemoteFunctions.GetOwnedWeaponsFunction
 local Inventory: table = {}
 
-local function GetOwnedWeapons(): {[string]: {[string]: boolean}}
-    local ownedWeapons: {[string]: {[string]: boolean}} = getOwnedWeaponsFunction:InvokeServer()
+local function GetOwnedWeapons(): {[string]: {string}}
+    local ownedWeapons: {[string]: {string}} = getOwnedWeaponsFunction:InvokeServer()
 
-    for _: string, weaponVariants: {[string]: boolean} in pairs(ownedWeapons) do
-        for weaponName: string, _: boolean in pairs(weaponVariants) do
+    for _: string, weaponVariants: {string} in pairs(ownedWeapons) do
+        for _: number, weaponName: string in pairs(weaponVariants) do
             local weapon: Tool = weapons:FindFirstChild(weaponName)
 
             if weapon then
@@ -47,6 +47,6 @@ function Inventory.DisableBackpack(player: Player): string?
     return equippedWeapon["Name"]
 end
 
---Inventory["OwnedWeapons"] = GetOwnedWeapons()
+Inventory["OwnedWeapons"] = GetOwnedWeapons()
 
 return Inventory

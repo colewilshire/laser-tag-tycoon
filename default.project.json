@@ -25,7 +25,7 @@
       },
       "RemoteFunctions" : {
         "$className": "Folder",
-        "ShopGui": {
+        "Gui": {
           "$className": "Folder",
           "GetOwnedWeaponsFunction": {
             "$className": "RemoteFunction"
@@ -45,6 +45,13 @@
           "$path": "src/ReplicatedStorage/Modules/Inventory"
         }
       },
+      "Definitions" : {
+        "$className": "Folder",
+        "Inventory": {
+          "$className": "Folder",
+          "$path": "src/ReplicatedStorage/Definitions/Inventory"
+        }
+      },
       "Teleporters": {
         "$className": "Folder",
         "Teleporter": {
@@ -60,6 +67,10 @@
       "Shops": {
         "$className": "Folder",
         "$path": "src/ServerScriptService/Shops"
+      },
+      "Inventory": {
+        "$className": "Folder",
+        "$path": "src/ServerScriptService/Inventory"
       }
     },
 

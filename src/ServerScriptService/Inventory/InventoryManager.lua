@@ -36,7 +36,6 @@ local function EquipOwnedWeapons(player: Player)
             local weapon: Tool = weaponTemplate and weaponTemplate:Clone()
 
             if weapon then
-                weapon:SetAttribute("Equipped", nil)
                 weapon.Parent = inventory
             end
         end
@@ -100,7 +99,7 @@ function InventoryManager.TryEquipWeapon(player: Player, weaponName: string): bo
     end
 
     newWeapon.Parent = backpack
-    return true
+    return true, newWeapon, currentWeapon
 end
 
 guiRemoteFunctions.TryEquipWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)

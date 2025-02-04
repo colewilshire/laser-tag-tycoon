@@ -65,7 +65,7 @@ local function CreateWeaponButton(weapon: Tool)
     end)
 
     weapon:GetAttributeChangedSignal("equipped"):Connect(function()
-        if gui.Enabled then
+        if gui.Enabled and weapon:GetAttribute("equipped") == true then
             DisplayWeapon(weapon)
             SetActiveItemButton(weaponButtonFrame)
         end
@@ -101,12 +101,15 @@ end
 
 local function TryEquipWeapon(weaponName: string): boolean
     if activeItemButtonFrame then
-        local success: boolean = tryEquipWeaponFunction:InvokeServer(weaponName)
+        local success: boolean, newWeapon: Tool, previousWeapon: Tool = tryEquipWeaponFunction:InvokeServer(weaponName)
 
         if success then
-            local weapon = weapons:FindFirstChild(weaponName)
-            weapon:SetAttribute("equipped", true)
-            equippedWeaponName = weapon.Name
+            local newWeaponTemplate: Tool = weapons:FindFirstChild(newWeapon.Name)
+            local previousWeaponTemplate: Tool = weapons:FindFirstChild(previousWeapon.Name)
+
+            equippedWeaponName = newWeapon.Name
+            newWeaponTemplate:SetAttribute("equipped", true)
+            previousWeaponTemplate:SetAttribute("equipped", nil)
         end
 
         return success
@@ -131,14 +134,6 @@ UserInputService.InputBegan:Connect(function(inputObject: InputObject)
             Close()
         end
     end
-end)
-
-Players.LocalPlayer.Backpack.ChildAdded:Connect(function(child: Instance)
-    child:SetAttribute("equipped", true)
-end)
-
-Players.LocalPlayer.Backpack.ChildRemoved:Connect(function(child: Instance)
-    child:SetAttribute("equipped", nil)
 end)
 
 InitializeGui()

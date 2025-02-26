@@ -30,11 +30,26 @@
           "GetOwnedWeaponsFunction": {
             "$className": "RemoteFunction"
           },
+          "GetEquippedWeaponFunction": {
+            "$className": "RemoteFunction"
+          },
           "TryPurchaseWeaponFunction": {
             "$className": "RemoteFunction"
           },
           "TryEquipWeaponFunction": {
             "$className": "RemoteFunction"
+          }
+        }
+      },
+      "Events" : {
+        "$className": "Folder",
+        "Inventory": {
+          "$className": "Folder",
+          "WeaponPurchasedEvent": {
+            "$className": "RemoteEvent"
+          },
+          "WeaponEquippedEvent": {
+            "$className": "RemoteEvent"
           }
         }
       },
@@ -71,6 +86,21 @@
       "Inventory": {
         "$className": "Folder",
         "$path": "src/ServerScriptService/Inventory"
+      },
+      "BindableEvents" : {
+        "$className": "Folder",
+        "Match": {
+          "$className": "Folder",
+          "MatchEnteredEvent": {
+            "$className": "BindableEvent"
+          },
+          "MatchStartedEvent": {
+            "$className": "BindableEvent"
+          },
+          "MatchEndedEvent": {
+            "$className": "BindableEvent"
+          }
+        }
       }
     },
 

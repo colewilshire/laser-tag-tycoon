@@ -1,6 +1,4 @@
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Inventory = require(ReplicatedStorage.Modules.Inventory.Inventory)
 local weapons: Folder = ReplicatedStorage.Weapons
 local scripts: Folder = script.Parent
 local gui: ScreenGui = scripts.Parent
@@ -17,7 +15,6 @@ local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
 local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.Gui
 local tryPurchaseWeaponFunction: RemoteFunction = guiRemoteFunctions.TryPurchaseWeaponFunction
 local activeItemButtonFrame: Frame
-local equippedWeaponName: string
 
 local function SetActiveItemButton(weaponButtonFrame: Frame)
     if activeItemButtonFrame then
@@ -67,30 +64,29 @@ local function CreateWeaponButton(weapon: Tool)
         DisplayWeapon(weapon)
         SetActiveItemButton(weaponButtonFrame)
     end)
-
-    weapon:GetAttributeChangedSignal("owned"):Connect(function()
-        if gui.Enabled then
-            DisplayWeapon(weapon)
-            SetActiveItemButton(weaponButtonFrame)
-        end
-    end)
 end
 
 local function InitializeGui()
     for _: number, weapon: Tool in ipairs(weapons:GetChildren()) do
         CreateWeaponButton(weapon)
     end
+
+    ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent.OnClientEvent:Connect(function(weaponName: string)
+        local weapon: Tool = weapons:FindFirstChild(weaponName)
+        if not weapon then return end
+
+        weapon:SetAttribute("owned", true)
+        DisplayWeapon(weapon)
+    end)
 end
 
 local function Open()
     gui.Enabled = true
-    equippedWeaponName = Inventory.DisableBackpack(Players.LocalPlayer)
 end
 
 local function Close()
     gui.Enabled = false
     itemInfoFrame.Visible = false
-    Inventory.EnableBackpack(Players.LocalPlayer, equippedWeaponName)
 
     if activeItemButtonFrame then
         activeItemButtonFrame.OutlineFrame.Visible = false
@@ -104,7 +100,6 @@ local function TryPurchaseWeapon(weaponName: string): boolean
         if success then
             local weapon = weapons:FindFirstChild(weaponName)
             weapon:SetAttribute("owned", true)
-            equippedWeaponName = weapon.Name
         end
 
         return success

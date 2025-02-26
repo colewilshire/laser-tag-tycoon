@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
-local Inventory = require(ReplicatedStorage.Modules.Inventory.Inventory)
 local weapons: Folder = ReplicatedStorage.Weapons
 local scripts: Folder = script.Parent
 local gui: ScreenGui = scripts.Parent
@@ -26,7 +25,7 @@ local function SetActiveItemButton(weaponButtonFrame: Frame)
     activeItemButtonFrame.OutlineFrame.Visible = true
 end
 
-local function DisplayWeapon(weapon: Tool)
+local function DisplayWeapon(weapon)
     local attributes: {string: any} = weapon:GetAttributes()
     local itemDescription: string = attributes["description"] or
         string.format("Damage: %d\nFire Mode: %s\nMagazine Size: %d\nRange: %d\nRate of Fire: %d",
@@ -36,7 +35,7 @@ local function DisplayWeapon(weapon: Tool)
         attributes["range"],
         attributes["rateOfFire"])
 
-    if Players.LocalPlayer.Backpack:FindFirstChild(weapon.Name) then
+    if weapon.Name == equippedWeaponName then
         equipButton.EquipText.Text = "Equipped"
         equipButton.Interactable = false
     else
@@ -50,7 +49,11 @@ local function DisplayWeapon(weapon: Tool)
     itemInfoFrame.Visible = true
 end
 
-local function CreateWeaponButton(weapon: Tool)
+local function CreateWeaponButton(weaponName: string)
+    local weapon: Tool = weapons:FindFirstChild(weaponName)
+    if not weapon then return end
+    weapon:SetAttribute("owned", true)
+
     local weaponButtonFrame: Frame = templateButtonFrame:Clone()
     local weaponButton: ImageButton = weaponButtonFrame.ItemButton
 
@@ -63,36 +66,39 @@ local function CreateWeaponButton(weapon: Tool)
         DisplayWeapon(weapon)
         SetActiveItemButton(weaponButtonFrame)
     end)
+end
 
-    weapon:GetAttributeChangedSignal("equipped"):Connect(function()
-        if gui.Enabled and weapon:GetAttribute("equipped") == true then
-            DisplayWeapon(weapon)
-            SetActiveItemButton(weaponButtonFrame)
+local function InitializeGui()
+    equippedWeaponName = ReplicatedStorage.RemoteFunctions.Gui.GetEquippedWeaponFunction:InvokeServer()
+
+    for _: number, weaponName: string in ipairs(ReplicatedStorage.RemoteFunctions.Gui.GetOwnedWeaponsFunction:InvokeServer()["Primary"]) do
+        CreateWeaponButton(weaponName)
+    end
+
+    ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent.OnClientEvent:Connect(function(weaponName: string)
+        CreateWeaponButton(weaponName)
+    end)
+
+    ReplicatedStorage.Events.Inventory.WeaponEquippedEvent.OnClientEvent:Connect(function(weaponName: string)
+        equippedWeaponName = weaponName
+
+        if gui.Enabled == true then
+            local weapon: Tool = weapons:FindFirstChild(weaponName)
+
+            if weapon then
+                DisplayWeapon(weapon)
+            end
         end
     end)
 end
 
-local function InitializeGui()
-    for _: number, weapon: Tool in ipairs(weapons:GetChildren()) do
-        if weapon:GetAttribute("owned") == true then
-            CreateWeaponButton(weapon)
-        end
-
-        weapon:GetAttributeChangedSignal("owned"):Connect(function()
-            CreateWeaponButton(weapon)
-        end)
-    end
-end
-
 local function Open()
     gui.Enabled = true
-    equippedWeaponName = Inventory.DisableBackpack(Players.LocalPlayer)
 end
 
 local function Close()
     gui.Enabled = false
     itemInfoFrame.Visible = false
-    Inventory.EnableBackpack(Players.LocalPlayer, equippedWeaponName)
 
     if activeItemButtonFrame then
         activeItemButtonFrame.OutlineFrame.Visible = false
@@ -101,18 +107,7 @@ end
 
 local function TryEquipWeapon(weaponName: string): boolean
     if activeItemButtonFrame then
-        local success: boolean, newWeapon: Tool, previousWeapon: Tool = tryEquipWeaponFunction:InvokeServer(weaponName)
-
-        if success then
-            local newWeaponTemplate: Tool = weapons:FindFirstChild(newWeapon.Name)
-            local previousWeaponTemplate: Tool = weapons:FindFirstChild(previousWeapon.Name)
-
-            equippedWeaponName = newWeapon.Name
-            newWeaponTemplate:SetAttribute("equipped", true)
-            previousWeaponTemplate:SetAttribute("equipped", nil)
-        end
-
-        return success
+        return tryEquipWeaponFunction:InvokeServer(weaponName)
     end
 
     return false
@@ -127,6 +122,8 @@ equipButton.Activated:Connect(function()
 end)
 
 UserInputService.InputBegan:Connect(function(inputObject: InputObject)
+    if Players.LocalPlayer.Team.Name ~= "Lobby" then return end
+
     if inputObject.KeyCode == Enum.KeyCode.I or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
         if not gui.Enabled then
             Open()

@@ -5,52 +5,23 @@ local PlayerDataManager: table = require(ServerScriptService.PlayerDataManager)
 local InventoryDefinitions: {string} = require(ReplicatedStorage.Definitions.Inventory.InventoryDefinitions)
 local weapons: Folder = ReplicatedStorage.Weapons
 local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.Gui
-local inventory: Folder
+local spawnEquippedWeaponConnections: {RBXScriptConnection} = {}
 local InventoryManager: table = {}
 
-local function SpawnInventory(player: Player): Folder
-    local newInventory = Instance.new("Folder")
-    newInventory.Name = "Inventory"
-    newInventory.Parent = player
+function InventoryManager.SpawnEquippedWeapon(player: Player)
+    local weaponName: string = PlayerDataManager.getEquippedRifleSkin(player)
+    local weaponTemplate: Tool = weapons:FindFirstChild(weaponName)
+    local weapon: Tool = weaponTemplate and weaponTemplate:Clone()
 
-    return newInventory
+    if weapon then
+        weapon.Parent = player.Backpack
+        player.Character.Humanoid:EquipTool(weapon)
+    end
 end
 
-local function EquipOwnedWeapons(player: Player)
-    local ownedWeapons: table =
-    {
-        [InventoryDefinitions.PrimaryWeaponTypeName] = PlayerDataManager.getRifleSkins(player),
-        [InventoryDefinitions.SecondaryWeaponTypeName] = PlayerDataManager.getPistolSkins(player)
-    }
-    local equippedWeapons: table =
-    {
-        [InventoryDefinitions.PrimaryWeaponTypeName] = PlayerDataManager.getEquippedRifleSkin(player),
-        [InventoryDefinitions.SecondaryWeaponTypeName] = PlayerDataManager.getEquippedPistolSkin(player)
-    }
-
-    inventory = inventory or SpawnInventory(player)
-
-    for _: string, weaponList: {string} in pairs(ownedWeapons) do
-        for _: number, weaponName: string in ipairs(weaponList) do
-            local weaponTemplate: Tool = weapons:FindFirstChild(weaponName)
-            local weapon: Tool = weaponTemplate and weaponTemplate:Clone()
-
-            if weapon then
-                weapon.Parent = inventory
-            end
-        end
-    end
-
-    for _: string, weaponName: string in pairs(equippedWeapons) do
-        local weapon = inventory:FindFirstChild(weaponName)
-
-        if weapon then
-            weapon.Parent = player.Backpack
-        end
-    end
-
-    if player.Backpack:FindFirstChildOfClass("Tool") then
-        player.Character.Humanoid:EquipTool(player.Backpack:FindFirstChildOfClass("Tool"))
+function InventoryManager.DespawnEquippedWeapon(player: Player)
+    for weapon: Tool in ipairs(player.Backpack) do
+        weapon:Destroy()
     end
 end
 
@@ -58,48 +29,23 @@ function InventoryManager.GetOwnedWeapons(player: Player): table
     local ownedWeapons: {[string]: {string}} =
     {
         [InventoryDefinitions.PrimaryWeaponTypeName] = PlayerDataManager.getRifleSkins(player),
-        [InventoryDefinitions.SecondaryWeaponTypeName] = PlayerDataManager.getPistolSkins(player)
     }
 
     return ownedWeapons
 end
 
 function InventoryManager.TryEquipWeapon(player: Player, weaponName: string): boolean
-    local ownedWeapons: table
-    local equippedWeaponName: string
-    local backpack: Backpack = player.Backpack
     local weaponTemplate: Tool = weapons:FindFirstChild(weaponName)
-    local weaponType: string = weaponTemplate:GetAttribute("weaponType")
 
     if not weaponTemplate then
         print(string.format("Weapon skin \"%s\" does not exist.", weaponName))
         return false
     end
 
-    if weaponType == InventoryDefinitions.PrimaryWeaponTypeName then
-        ownedWeapons = PlayerDataManager.getRifleSkins(player)
-        equippedWeaponName = PlayerDataManager.getEquippedRifleSkin(player)
-        PlayerDataManager.updateEquippedRifleSkin(player, weaponName)
-    else
-        ownedWeapons = PlayerDataManager.getPistolSkins(player)
-        equippedWeaponName = PlayerDataManager.getEquippedPistolSkin(player)
-        PlayerDataManager.updateEquippedPistolSkin(player, weaponName)
-    end
+    PlayerDataManager.updateEquippedRifleSkin(player, weaponName)
+    ReplicatedStorage.Events.Inventory.WeaponEquippedEvent:FireClient(player, weaponName)
 
-    if not ownedWeapons then
-        return false
-    end
-
-    inventory = inventory or SpawnInventory(player)
-    local newWeapon: Tool = inventory:FindFirstChild(weaponName) or weaponTemplate:Clone()
-    local currentWeapon: Tool? = equippedWeaponName and backpack:FindFirstChild(equippedWeaponName)
-
-    if currentWeapon then
-        currentWeapon.Parent = inventory
-    end
-
-    newWeapon.Parent = backpack
-    return true, newWeapon, currentWeapon
+    return true
 end
 
 guiRemoteFunctions.TryEquipWeaponFunction.OnServerInvoke = (function(player: Player, weaponName: string)
@@ -110,10 +56,29 @@ guiRemoteFunctions.GetOwnedWeaponsFunction.OnServerInvoke = (function(player: Pl
     return InventoryManager.GetOwnedWeapons(player)
 end)
 
-Players.PlayerAdded:Connect(function(player: Player)
-    player.CharacterAdded:Connect(function()
-        EquipOwnedWeapons(player)
+guiRemoteFunctions.GetEquippedWeaponFunction.OnServerInvoke = (function(player: Player)
+    return PlayerDataManager.getEquippedRifleSkin(player)
+end)
+
+Players.PlayerRemoving:Connect(function(player: Player)
+    if spawnEquippedWeaponConnections[player] then
+        spawnEquippedWeaponConnections[player]:Disconnect()
+        spawnEquippedWeaponConnections[player] = nil
+    end
+end)
+
+ServerScriptService.BindableEvents.Match.MatchStartedEvent.Event:Connect(function(player: Player)
+    InventoryManager.SpawnEquippedWeapon(player)
+
+    spawnEquippedWeaponConnections[player] = player.CharacterAdded:Connect(function(_: Model)
+        InventoryManager.SpawnEquippedWeapon(player)
     end)
+end)
+
+ServerScriptService.BindableEvents.Match.MatchEndedEvent.Event:Connect(function(player: Player)
+    spawnEquippedWeaponConnections[player]:Disconnect()
+    spawnEquippedWeaponConnections[player] = nil
+    InventoryManager.DespawnEquippedWeapon(player)
 end)
 
 return InventoryManager

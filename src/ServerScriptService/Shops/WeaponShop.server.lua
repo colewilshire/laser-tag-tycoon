@@ -48,7 +48,7 @@ local function TryPurchaseWeapon(player: Player, weaponName: string): boolean
             PlayerDataManager.updateMoneyAdd(player, cost * -1)
             InventoryManager.TryEquipWeapon(player, weaponName, weaponType)
             print("Success: " .. money .. " money remaining.")
-            ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent:FireClient(player, weaponName)
+            ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent:FireClient(player, weaponName, money)
             return true
         else
             print("Error: Weapon already owned.")

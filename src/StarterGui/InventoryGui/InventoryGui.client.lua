@@ -1,98 +1,58 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
-local weapons: Folder = ReplicatedStorage.Weapons
-local scripts: Folder = script.Parent
-local gui: ScreenGui = scripts.Parent
+local Gui: table = require(ReplicatedStorage.Modules.Gui.Gui)
+local Inventory: table = require(ReplicatedStorage.Modules.Inventory.Inventory)
+local gui: ScreenGui = script.Parent.Parent
 local guiFrame: Frame = gui.GuiFrame
 local exitButton: ImageButton = guiFrame.ExitButton
 local inventoryFrame: Frame = guiFrame.BackgroundFrame.InventoryFrame
 local itemInfoFrame: Frame = guiFrame.EquipFrame.ItemInfoFrame
 local equipButton: ImageButton = itemInfoFrame.EquipButtonFrame.EquipButton
+local moneyText: TextLabel = inventoryFrame.Money
 local scrollingFrame: ScrollingFrame = inventoryFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
-local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.Gui
-local tryEquipWeaponFunction: RemoteFunction = guiRemoteFunctions.TryEquipWeaponFunction
-local activeItemButtonFrame: Frame
-local equippedWeaponName: string
+local inventoryEvents: Folder = ReplicatedStorage.Events.Inventory
+local equipmentUpdatedEvent: BindableEvent = inventoryEvents.EquipmentUpdatedEvent
+local moneyUpdatedEvent: BindableEvent = inventoryEvents.MoneyUpdatedEvent
+local weaponButtons: {[string]: ImageButton} = {}
+local activationText: {[boolean]: string} =
+{
+    [true] = "Equipped",
+    [false] = "Equip"
+}
 
-local function SetActiveItemButton(weaponButtonFrame: Frame)
-    if activeItemButtonFrame then
-        activeItemButtonFrame.OutlineFrame.Visible = false
+local function TryGetWeaponButton(weaponName: string): ImageButton
+    local weaponButton: ImageButton = weaponButtons[weaponName]
+
+    if not weaponButton then
+        weaponButton = Gui.CreateWeaponButton(gui, weaponName)
     end
 
-    activeItemButtonFrame = weaponButtonFrame
-    activeItemButtonFrame.OutlineFrame.Visible = true
-end
-
-local function DisplayWeapon(weapon)
-    local attributes: {string: any} = weapon:GetAttributes()
-    local itemDescription: string = attributes["description"] or
-        string.format("Damage: %d\nFire Mode: %s\nMagazine Size: %d\nRange: %d\nRate of Fire: %d",
-        attributes["damage"],
-        attributes["fireMode"],
-        attributes["magazineSize"],
-        attributes["range"],
-        attributes["rateOfFire"])
-
-    if weapon.Name == equippedWeaponName then
-        equipButton.EquipText.Text = "Equipped"
-        equipButton.Interactable = false
-    else
-        equipButton.EquipText.Text = "Equip"
-        equipButton.Interactable = true
-    end
-
-    itemInfoFrame.ItemDescription.Text = itemDescription
-    itemInfoFrame.ItemName.Text = attributes["displayName"] or weapon.Name
-    itemInfoFrame.ItemImage.Image = weapon.TextureId
-    itemInfoFrame.Visible = true
-end
-
-local function CreateWeaponButton(weaponName: string)
-    local weapon: Tool = weapons:FindFirstChild(weaponName)
-    if not weapon then return end
-    weapon:SetAttribute("owned", true)
-
-    local weaponButtonFrame: Frame = templateButtonFrame:Clone()
-    local weaponButton: ImageButton = weaponButtonFrame.ItemButton
-
-    weaponButtonFrame.Name = weapon.Name
-    weaponButtonFrame.Parent = scrollingFrame
-    weaponButton.Image = weapon.TextureId
-    weaponButtonFrame.Visible = true
-
-    weaponButton.Activated:Connect(function()
-        DisplayWeapon(weapon)
-        SetActiveItemButton(weaponButtonFrame)
-    end)
+    return weaponButton
 end
 
 local function InitializeGui()
-    equippedWeaponName = ReplicatedStorage.RemoteFunctions.Gui.GetEquippedWeaponFunction:InvokeServer()
+    Gui.RegisterGui(gui, equipButton, Inventory.IsEquippedWeapon, activationText, itemInfoFrame, scrollingFrame, templateButtonFrame, weaponButtons)
 
-    for _: number, weaponName: string in ipairs(ReplicatedStorage.RemoteFunctions.Gui.GetOwnedWeaponsFunction:InvokeServer()["Primary"]) do
-        CreateWeaponButton(weaponName)
+    for weaponName: string, _: boolean in pairs(Inventory.GetOwnedWeapons()) do
+        Gui.CreateWeaponButton(gui, weaponName)
     end
 
-    ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent.OnClientEvent:Connect(function(weaponName: string)
-        CreateWeaponButton(weaponName)
+    moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>%i", utf8.char(0xE002), Inventory.GetMoney())
+
+    equipmentUpdatedEvent.Event:Connect(function(equippedWeaponName: string)
+        local weaponButton: ImageButton = TryGetWeaponButton(equippedWeaponName)
+        Gui.DisplayWeapon(gui, equippedWeaponName)
     end)
 
-    ReplicatedStorage.Events.Inventory.WeaponEquippedEvent.OnClientEvent:Connect(function(weaponName: string)
-        equippedWeaponName = weaponName
-
-        if gui.Enabled == true then
-            local weapon: Tool = weapons:FindFirstChild(weaponName)
-
-            if weapon then
-                DisplayWeapon(weapon)
-            end
-        end
+    moneyUpdatedEvent.Event:Connect(function(currentPlayerMoney: number)
+        moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>>%i", utf8.char(0xE002), currentPlayerMoney)
     end)
 end
 
 local function Open()
+    Gui.DisplayWeapon(gui, Inventory.GetEquippedWeaponName())
     gui.Enabled = true
 end
 
@@ -100,17 +60,9 @@ local function Close()
     gui.Enabled = false
     itemInfoFrame.Visible = false
 
-    if activeItemButtonFrame then
-        activeItemButtonFrame.OutlineFrame.Visible = false
+    if Gui.GetActiveWeaponButtonFrame(gui) then
+        Gui.GetActiveWeaponButtonFrame(gui).OutlineFrame.Visible = false
     end
-end
-
-local function TryEquipWeapon(weaponName: string): boolean
-    if activeItemButtonFrame then
-        return tryEquipWeaponFunction:InvokeServer(weaponName)
-    end
-
-    return false
 end
 
 exitButton.Activated:Connect(function()
@@ -118,7 +70,9 @@ exitButton.Activated:Connect(function()
 end)
 
 equipButton.Activated:Connect(function()
-    TryEquipWeapon(activeItemButtonFrame.Name)
+    if Inventory.TryEquipWeapon(Gui.GetActiveWeaponButtonFrame(gui).Name) then
+        Gui.DisplayWeapon(gui, Gui.GetActiveWeaponButtonFrame(gui).Name)
+    end
 end)
 
 UserInputService.InputBegan:Connect(function(inputObject: InputObject)

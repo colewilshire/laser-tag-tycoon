@@ -60,6 +60,10 @@ guiRemoteFunctions.GetEquippedWeaponFunction.OnServerInvoke = (function(player: 
     return PlayerDataManager.getEquippedRifleSkin(player)
 end)
 
+guiRemoteFunctions.GetMoneyFunction.OnServerInvoke = (function(player: Player)
+    return PlayerDataManager.getMoney(player)
+end)
+
 Players.PlayerRemoving:Connect(function(player: Player)
     if spawnEquippedWeaponConnections[player] then
         spawnEquippedWeaponConnections[player]:Disconnect()

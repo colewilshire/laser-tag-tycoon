@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Inventory: table = require(ReplicatedStorage.Modules.Inventory.Inventory)
 local weapons: Folder = ReplicatedStorage.Weapons
 local scripts: Folder = script.Parent
 local gui: ScreenGui = scripts.Parent
@@ -10,10 +11,9 @@ local exitButton: ImageButton = guiFrame.ExitButton
 local shopFrame: Frame = guiFrame.BackgroundFrame.ShopFrame
 local itemInfoFrame: Frame = guiFrame.PurchaseFrame.ItemInfoFrame
 local purchaseButton: ImageButton = itemInfoFrame.PurchaseButtonFrame.PurchaseButton
+local moneyText: TextLabel = shopFrame.Money
 local scrollingFrame: ScrollingFrame = shopFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
-local guiRemoteFunctions: Folder = ReplicatedStorage.RemoteFunctions.Gui
-local tryPurchaseWeaponFunction: RemoteFunction = guiRemoteFunctions.TryPurchaseWeaponFunction
 local activeItemButtonFrame: Frame
 
 local function SetActiveItemButton(weaponButtonFrame: Frame)
@@ -71,11 +71,13 @@ local function InitializeGui()
         CreateWeaponButton(weapon)
     end
 
-    ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent.OnClientEvent:Connect(function(weaponName: string)
+    moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>%i", utf8.char(0xE002), Inventory.GetMoney())
+
+    ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent.OnClientEvent:Connect(function(weaponName: string, currentPlayerMoney: number)
+        moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>%i", utf8.char(0xE002), currentPlayerMoney)
         local weapon: Tool = weapons:FindFirstChild(weaponName)
         if not weapon then return end
 
-        weapon:SetAttribute("owned", true)
         DisplayWeapon(weapon)
     end)
 end
@@ -93,21 +95,6 @@ local function Close()
     end
 end
 
-local function TryPurchaseWeapon(weaponName: string): boolean
-    if activeItemButtonFrame then
-        local success: boolean = tryPurchaseWeaponFunction:InvokeServer(weaponName)
-
-        if success then
-            local weapon = weapons:FindFirstChild(weaponName)
-            weapon:SetAttribute("owned", true)
-        end
-
-        return success
-    end
-
-    return false
-end
-
 enableGuiEvent.OnClientEvent:Connect(function()
     Open()
 end)
@@ -121,7 +108,7 @@ exitButton.Activated:Connect(function()
 end)
 
 purchaseButton.Activated:Connect(function()
-    TryPurchaseWeapon(activeItemButtonFrame.Name)
+    Inventory.TryPurchaseWeapon(activeItemButtonFrame.Name)
 end)
 
 InitializeGui()

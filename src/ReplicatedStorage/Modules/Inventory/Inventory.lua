@@ -63,9 +63,14 @@ end
 
 function Inventory.TryEquipWeapon(weaponName: string?): boolean
     if weaponName then
-        Inventory["EquippedWeapon"] = weaponName
-        equipmentUpdatedEvent:Fire(weaponName)
-        return tryEquipWeaponFunction:InvokeServer(weaponName)
+        local success: boolean = tryEquipWeaponFunction:InvokeServer(weaponName)
+
+        if success then
+            Inventory["EquippedWeapon"] = weaponName
+            equipmentUpdatedEvent:Fire(weaponName)
+
+            return success
+        end
     end
 
     return false
@@ -73,7 +78,14 @@ end
 
 function Inventory.TryPurchaseWeapon(weaponName: string?): boolean
     if weaponName then
-        return tryPurchaseWeaponFunction:InvokeServer(weaponName)
+        local success: boolean = tryPurchaseWeaponFunction:InvokeServer(weaponName)
+
+        if success then
+            Inventory["EquippedWeapon"] = weaponName
+            equipmentUpdatedEvent:Fire(weaponName)
+
+            return success
+        end
     end
 
     return false

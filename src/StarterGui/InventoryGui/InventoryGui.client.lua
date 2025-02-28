@@ -47,7 +47,7 @@ local function InitializeGui()
     end)
 
     moneyUpdatedEvent.Event:Connect(function(currentPlayerMoney: number)
-        moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>>%i", utf8.char(0xE002), currentPlayerMoney)
+        moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>%i", utf8.char(0xE002), currentPlayerMoney)
     end)
 end
 

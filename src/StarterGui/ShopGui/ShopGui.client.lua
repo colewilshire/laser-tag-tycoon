@@ -35,7 +35,7 @@ local function DisplayWeapon(weapon: Tool)
         attributes["range"],
         attributes["rateOfFire"])
 
-    if attributes["owned"] then
+    if Inventory.OwnsWeapon(weapon.Name) then
         itemInfoFrame.Cost.Text = "Already Owned"
         purchaseButton.PurchaseText.Text = "Owned"
         purchaseButton.Interactable = false
@@ -73,9 +73,13 @@ local function InitializeGui()
 
     moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>%i", utf8.char(0xE002), Inventory.GetMoney())
 
-    ReplicatedStorage.Events.Inventory.WeaponPurchasedEvent.OnClientEvent:Connect(function(weaponName: string, currentPlayerMoney: number)
-        moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>%i", utf8.char(0xE002), currentPlayerMoney)
-        local weapon: Tool = weapons:FindFirstChild(weaponName)
+    local inventoryEvents: Folder = ReplicatedStorage.Events.Inventory
+    local equipmentUpdatedEvent: BindableEvent = inventoryEvents.EquipmentUpdatedEvent
+
+    equipmentUpdatedEvent.Event:Connect(function(equippedWeaponName: string)
+        moneyText.Text = string.format("<font color =\"#AAAAFF\">%s</font>%i", utf8.char(0xE002), Inventory.GetMoney())
+
+        local weapon: Tool = weapons:FindFirstChild(equippedWeaponName)
         if not weapon then return end
 
         DisplayWeapon(weapon)

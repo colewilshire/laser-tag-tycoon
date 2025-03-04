@@ -20,7 +20,12 @@ function InventoryManager.SpawnEquippedWeapon(player: Player)
 end
 
 function InventoryManager.DespawnEquippedWeapon(player: Player)
-    for weapon: Tool in ipairs(player.Backpack) do
+    local character: Model = player.Character or player.CharacterAdded:Wait()
+    local humanoid: Humanoid = character:WaitForChild("Humanoid")
+
+    humanoid:UnequipTools()
+
+    for _:number, weapon: Tool in ipairs(player.Backpack:GetChildren()) do
         weapon:Destroy()
     end
 end

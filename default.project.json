@@ -46,6 +46,12 @@
       },
       "Events" : {
         "$className": "Folder",
+        "Gui": {
+          "$className": "Folder",
+          "CloseGuiEvent": {
+            "$className": "RemoteEvent"
+          }
+        },
         "Inventory": {
           "$className": "Folder",
           "WeaponPurchasedEvent": {
@@ -99,6 +105,10 @@
       "Inventory": {
         "$className": "Folder",
         "$path": "src/ServerScriptService/Inventory"
+      },
+      "Gui": {
+        "$className": "Folder",
+        "$path": "src/ServerScriptService/Gui"
       },
       "BindableEvents" : {
         "$className": "Folder",

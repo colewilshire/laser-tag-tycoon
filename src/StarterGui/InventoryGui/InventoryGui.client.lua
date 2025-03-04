@@ -15,6 +15,8 @@ local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
 local inventoryEvents: Folder = ReplicatedStorage.Events.Inventory
 local equipmentUpdatedEvent: BindableEvent = inventoryEvents.EquipmentUpdatedEvent
 local moneyUpdatedEvent: BindableEvent = inventoryEvents.MoneyUpdatedEvent
+local guiEvents: Folder = ReplicatedStorage.Events.Gui
+local closeGuiEvent: RemoteEvent = guiEvents.CloseGuiEvent
 local weaponButtons: {[string]: ImageButton} = {}
 local activationText: {[boolean]: string} =
 {
@@ -85,6 +87,10 @@ UserInputService.InputBegan:Connect(function(inputObject: InputObject)
             Close()
         end
     end
+end)
+
+closeGuiEvent.OnClientEvent:Connect(function()
+    Close()
 end)
 
 InitializeGui()

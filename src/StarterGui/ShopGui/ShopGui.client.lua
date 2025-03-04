@@ -6,6 +6,8 @@ local gui: ScreenGui = scripts.Parent
 local remoteEvents: Folder = gui.RemoteEvents
 local enableGuiEvent: RemoteEvent = remoteEvents.EnableGuiEvent
 local disableGuiEvent: RemoteEvent = remoteEvents.DisableGuiEvent
+local guiEvents: Folder = ReplicatedStorage.Events.Gui
+local closeGuiEvent: RemoteEvent = guiEvents.CloseGuiEvent
 local guiFrame: Frame = gui.GuiFrame
 local exitButton: ImageButton = guiFrame.ExitButton
 local shopFrame: Frame = guiFrame.BackgroundFrame.ShopFrame
@@ -113,6 +115,10 @@ end)
 
 purchaseButton.Activated:Connect(function()
     Inventory.TryPurchaseWeapon(activeItemButtonFrame.Name)
+end)
+
+closeGuiEvent.OnClientEvent:Connect(function()
+    Close()
 end)
 
 InitializeGui()

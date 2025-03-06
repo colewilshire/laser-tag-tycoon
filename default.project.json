@@ -110,6 +110,10 @@
         "$className": "Folder",
         "$path": "src/ServerScriptService/Gui"
       },
+      "Scoreboard": {
+        "$className": "Folder",
+        "$path": "src/ServerScriptService/Scoreboard"
+      },
       "BindableEvents" : {
         "$className": "Folder",
         "Match": {
@@ -128,6 +132,24 @@
     },
 
     "StarterGui": {
+      "InventoryGui": {
+        "$className": "ScreenGui",
+        "Scripts": {
+          "$path": "src/StarterGui/InventoryGui"
+        }
+      },
+      "InventoryButtonGui": {
+        "$className": "ScreenGui",
+        "Scripts": {
+          "$path": "src/StarterGui/InventoryButtonGui"
+        }
+      },
+      "ScoreboardGui": {
+        "$className": "ScreenGui",
+        "Scripts": {
+          "$path": "src/StarterGui/ScoreboardGui"
+        }
+      },
       "ShopGui": {
         "$className": "ScreenGui",
         "RemoteEvents": {
@@ -141,18 +163,6 @@
         },
         "Scripts": {
           "$path": "src/StarterGui/ShopGui"
-        }
-      },
-      "InventoryGui": {
-        "$className": "ScreenGui",
-        "Scripts": {
-          "$path": "src/StarterGui/InventoryGui"
-        }
-      },
-      "InventoryButtonGui": {
-        "$className": "ScreenGui",
-        "Scripts": {
-          "$path": "src/StarterGui/InventoryButtonGui"
         }
       }
     }

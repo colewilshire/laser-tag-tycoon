@@ -1,84 +1,78 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local gui: ScreenGui = script.Parent.Parent
 local guiFrame: Frame = gui.GuiFrame
 local team1Frame: Frame = guiFrame.Team1Frame
 local team2Frame: Frame = guiFrame.Team2Frame
-local testPlayerList: {} =
-{
-    ["Team1"] = {
-        [31571502] =
-        {
-            ["DisplayName"] = "REDxHOSS88",
-            ["Kills"] = 33,
-            ["Deaths"] = 27
-        }
-    },
-    ["Team2"] = {
-        [31571502] =
-        {
-            ["DisplayName"] = "The_Other_Guy",
-            ["Kills"] = 22,
-            ["Deaths"] = 55
-        }
-    },
-}
+local getScoredboardFunction: RemoteFunction = ReplicatedStorage.RemoteFunctions.Gui.GetScoredboardFunction
+local clearScoreboardEvent: RemoteEvent = ReplicatedStorage.Events.Gui.ClearScoreboardEvent
+local showScoreboardEvent: RemoteEvent = ReplicatedStorage.Events.Gui.ShowScoreboardEvent
+
+local function Open(players: {[number]: table}?, teamScores: {[string]: number}?)
+    if not players or not teamScores then
+        players, teamScores = getScoredboardFunction:InvokeServer()
+    end
+    if not players or not teamScores then return end
+
+    local team1: string, _: number = next(teamScores)
+
+    for userId: number, playerDetails: table in pairs(players) do
+        local playerEntry: Frame = team1Frame:FindFirstChild(userId) or team2Frame:FindFirstChild(userId)
+
+        if not playerEntry then
+            playerEntry = guiFrame.TemplateFrame:Clone()
+            local portrait: ImageLabel = playerEntry.Portrait
+            local displayName: TextLabel = playerEntry.DisplayName
+
+            playerEntry.BackgroundColor3 = playerDetails["Color"]
+            portrait.Image = Players:GetUserThumbnailAsync(playerDetails["CharacterAppearanceId"], 0, 0)
+            displayName.Text = playerDetails["DisplayName"]
+            playerEntry.Name = tostring(userId)
+            playerEntry.Parent = playerDetails["Team"] == team1 and team1Frame or team2Frame
+            playerEntry.Visible = true
+        end
+
+        local kills: TextLabel = playerEntry.Kills
+        local deaths: TextLabel = playerEntry.Deaths
+
+        kills.Text = playerDetails["Kills"]
+        deaths.Text = playerDetails["Deaths"]
+    end
+
+    gui.Enabled = true
+end
+
+local function Close()
+    gui.Enabled = false
+end
 
 local function ClearGui()
-    for _: number, frame: Frame in ipairs(team1Frame:GetChildren()) do
-        frame:Destroy()
+    for _: number, instance: Instance in ipairs(team1Frame:GetChildren()) do
+        if instance:IsA("Frame") then
+            instance:Destroy()
+        end
+    end
+
+    for _: number, instance: Instance in ipairs(team2Frame:GetChildren()) do
+        if instance:IsA("Frame") then
+            instance:Destroy()
+        end
     end
 end
 
-local function InitializeGui(scoreboard: table)
-    -- for teamName: string, playerList: table in pairs(scoreboard) do
-    --     for userId: number, playerStats: table in pairs(playerList) do
-    --         local templateFrameClone: Frame = team1Frame.TemplateFrame:Clone()
-    --         local portrait: ImageLabel = templateFrameClone.Portrait
-    --         local displayName: TextLabel = templateFrameClone.DisplayName
-    --         local kills: TextLabel = templateFrameClone.Kills
-    --         local deaths: TextLabel = templateFrameClone.Deaths
+clearScoreboardEvent.OnClientEvent:Connect(ClearGui)
 
-    --         portrait.Image = Players:GetUserThumbnailAsync(userId, 0, 0)
-    --         displayName.Text = playerStats["DisplayName"]
-    --         kills.Text = playerStats["Kills"]
-    --         deaths.Text = playerStats["Deaths"]
-    --         templateFrameClone.Name = "TestTestTest"
-    --         templateFrameClone.Parent = team1Frame
-    --         templateFrameClone.Visible = true
-    --     end
-    -- end
+showScoreboardEvent.OnClientEvent:Connect(function(players: {[number]: table}, teamScores: {[string]: number})
+    Open(players, teamScores)
+end)
 
-    for userId: number, playerStats: table in pairs(scoreboard["Team1"]) do
-        local templateFrameClone: Frame = team1Frame.TemplateFrame:Clone()
-        local portrait: ImageLabel = templateFrameClone.Portrait
-        local displayName: TextLabel = templateFrameClone.DisplayName
-        local kills: TextLabel = templateFrameClone.Kills
-        local deaths: TextLabel = templateFrameClone.Deaths
-
-        portrait.Image = Players:GetUserThumbnailAsync(userId, 0, 0)
-        displayName.Text = playerStats["DisplayName"]
-        kills.Text = playerStats["Kills"]
-        deaths.Text = playerStats["Deaths"]
-        templateFrameClone.Name = "TestTestTest"
-        templateFrameClone.Parent = team1Frame
-        templateFrameClone.Visible = true
+UserInputService.InputBegan:Connect(function(inputObject: InputObject)
+    if inputObject.KeyCode == Enum.KeyCode.Tab or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
+        if not gui.Enabled then
+            Open()
+        else
+            Close()
+        end
     end
-
-    for userId: number, playerStats: table in pairs(scoreboard["Team2"]) do
-        local templateFrameClone: Frame = team2Frame.TemplateFrame:Clone()
-        local portrait: ImageLabel = templateFrameClone.Portrait
-        local displayName: TextLabel = templateFrameClone.DisplayName
-        local kills: TextLabel = templateFrameClone.Kills
-        local deaths: TextLabel = templateFrameClone.Deaths
-
-        portrait.Image = Players:GetUserThumbnailAsync(userId, 0, 0)
-        displayName.Text = playerStats["DisplayName"]
-        kills.Text = playerStats["Kills"]
-        deaths.Text = playerStats["Deaths"]
-        templateFrameClone.Name = "TestTestTest"
-        templateFrameClone.Parent = team2Frame
-        templateFrameClone.Visible = true
-    end
-end
-
-InitializeGui(testPlayerList)
+end)

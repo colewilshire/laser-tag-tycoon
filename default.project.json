@@ -36,6 +36,9 @@
           "GetMoneyFunction": {
             "$className": "RemoteFunction"
           },
+          "GetScoredboardFunction": {
+            "$className": "RemoteFunction"
+          },
           "TryPurchaseWeaponFunction": {
             "$className": "RemoteFunction"
           },
@@ -49,6 +52,12 @@
         "Gui": {
           "$className": "Folder",
           "CloseGuiEvent": {
+            "$className": "RemoteEvent"
+          },
+          "ClearScoreboardEvent": {
+            "$className": "RemoteEvent"
+          },
+          "ShowScoreboardEvent": {
             "$className": "RemoteEvent"
           }
         },

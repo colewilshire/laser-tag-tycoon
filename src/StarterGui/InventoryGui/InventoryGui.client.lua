@@ -54,6 +54,7 @@ local function InitializeGui()
 end
 
 local function Open()
+    if Players.LocalPlayer.Team.Name ~= "Lobby" then return end
     Gui.DisplayWeapon(gui, Inventory.GetEquippedWeaponName())
     gui.Enabled = true
 end
@@ -78,8 +79,6 @@ equipButton.Activated:Connect(function()
 end)
 
 UserInputService.InputBegan:Connect(function(inputObject: InputObject)
-    if Players.LocalPlayer.Team.Name ~= "Lobby" then return end
-
     if inputObject.KeyCode == Enum.KeyCode.I or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
         if not gui.Enabled then
             Open()

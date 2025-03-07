@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Inventory: table = require(ReplicatedStorage.Modules.Inventory.Inventory)
 local weapons: Folder = ReplicatedStorage.Weapons
@@ -89,6 +90,7 @@ local function InitializeGui()
 end
 
 local function Open()
+    if Players.LocalPlayer.Team.Name ~= "Lobby" then return end
     gui.Enabled = true
 end
 

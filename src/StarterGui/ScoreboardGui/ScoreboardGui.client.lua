@@ -21,16 +21,11 @@ local function Open(players: {[number]: table}?, teamScores: {[string]: number}?
     local team2: string, team2Score: number = next(teamScores, team1)
     local leadingTeam: string?
 
-    print(tostring(team1))
-    print(tostring(team2))
-
     if team1Score > team2Score then
         leadingTeam = team1
     elseif team2Score > team1Score then
         leadingTeam = team2
     end
-
-    print(string.format("Leading team: %s", tostring(leadingTeam)))
 
     for userId: number, playerDetails: table in pairs(players) do
         local playerEntry: Frame = team1Frame:FindFirstChild(userId) or team2Frame:FindFirstChild(userId)
@@ -92,10 +87,8 @@ local function Open(players: {[number]: table}?, teamScores: {[string]: number}?
                 place.Text = 2
                 teamEntry.LayoutOrder = 1
             end
-            print("t")
             place.Visible = true
         else
-            print("f")
             place.Visible = false
         end
     end

@@ -4,17 +4,21 @@ local Inventory: table = require(ReplicatedStorage.Modules.Inventory.Inventory)
 local weapons: Folder = ReplicatedStorage.Weapons
 local scripts: Folder = script.Parent
 local gui: ScreenGui = scripts.Parent
+
 local remoteEvents: Folder = gui.RemoteEvents
 local enableGuiEvent: RemoteEvent = remoteEvents.EnableGuiEvent
 local disableGuiEvent: RemoteEvent = remoteEvents.DisableGuiEvent
-local guiEvents: Folder = ReplicatedStorage.Events.Gui
-local closeGuiEvent: RemoteEvent = guiEvents.CloseGuiEvent
+local closeGuiEvent: RemoteEvent = ReplicatedStorage.Events.Gui.CloseGuiEvent
 local guiFrame: Frame = gui.GuiFrame
+
 local exitButton: ImageButton = guiFrame.ExitButton
 local shopFrame: Frame = guiFrame.BackgroundFrame.ShopFrame
 local itemInfoFrame: Frame = guiFrame.PurchaseFrame.ItemInfoFrame
 local purchaseButton: ImageButton = itemInfoFrame.PurchaseButtonFrame.PurchaseButton
+local equipButton: ImageButton = itemInfoFrame.EquipButtonFrame.EquipButton
 local moneyText: TextLabel = shopFrame.Money
+local equippedText: TextLabel = itemInfoFrame.Equipped
+
 local scrollingFrame: ScrollingFrame = shopFrame.ScrollingFrame
 local templateButtonFrame: ImageButton = scrollingFrame.TemplateButtonFrame
 local activeItemButtonFrame: Frame
@@ -41,15 +45,26 @@ local function DisplayWeapon(weapon: Tool)
     if Inventory.OwnsWeapon(weapon.Name) then
         itemInfoFrame.Cost.Text = "Already Owned"
         purchaseButton.PurchaseText.Text = "Owned"
-        purchaseButton.Interactable = false
+		purchaseButton.Parent.Visible = false
+
+		if Inventory.GetEquippedWeaponName() == weapon.Name then
+			equipButton.Parent.Visible = false;
+			equippedText.Visible = true;
+		else
+			equipButton.Parent.Visible = true;
+			equippedText.Visible = false;
+		end
     else
         itemInfoFrame.Cost.Text = (attributes["cost"] or 0) .. " Money"
         purchaseButton.PurchaseText.Text = "Purchase"
-        purchaseButton.Interactable = true
-    end
+		purchaseButton.Parent.Visible = true
+
+		equipButton.Parent.Visible = false;
+		equippedText.Visible = false;
+	end
 
     itemInfoFrame.ItemDescription.Text = itemDescription
-    itemInfoFrame.ItemName.Text = attributes["displayName"] or weapon.Name
+    itemInfoFrame.ItemName.Text = attributes["displayName"] or weapon.Name .. " Skin";
     itemInfoFrame.ItemImage.Image = weapon.TextureId
     itemInfoFrame.Visible = true
 end
@@ -103,24 +118,18 @@ local function Close()
     end
 end
 
-enableGuiEvent.OnClientEvent:Connect(function()
-    Open()
-end)
-
-disableGuiEvent.OnClientEvent:Connect(function()
-    Close()
-end)
-
-exitButton.Activated:Connect(function()
-    Close()
-end)
+enableGuiEvent.OnClientEvent:Connect(Open)
+disableGuiEvent.OnClientEvent:Connect(Close)
+exitButton.Activated:Connect(Close)
+closeGuiEvent.OnClientEvent:Connect(Close)
 
 purchaseButton.Activated:Connect(function()
     Inventory.TryPurchaseWeapon(activeItemButtonFrame.Name)
 end)
 
-closeGuiEvent.OnClientEvent:Connect(function()
-    Close()
+equipButton.Activated:Connect(function()
+	Inventory.TryEquipWeapon(activeItemButtonFrame.Name)
+	print("currently equipped: ", Inventory.GetEquippedWeaponName())
 end)
 
 InitializeGui()

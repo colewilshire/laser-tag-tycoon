@@ -78,15 +78,15 @@ equipButton.Activated:Connect(function()
     end
 end)
 
-UserInputService.InputBegan:Connect(function(inputObject: InputObject)
-    if inputObject.KeyCode == Enum.KeyCode.I or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
-        if not gui.Enabled then
-            Open()
-        else
-            Close()
-        end
-    end
-end)
+-- UserInputService.InputBegan:Connect(function(inputObject: InputObject)
+--     if inputObject.KeyCode == Enum.KeyCode.I or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
+--         if not gui.Enabled then
+--             Open()
+--         else
+--             Close()
+--         end
+--     end
+-- end)
 
 closeGuiEvent.OnClientEvent:Connect(function()
     Close()

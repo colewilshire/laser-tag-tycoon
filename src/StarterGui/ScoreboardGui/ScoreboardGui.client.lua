@@ -3,7 +3,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Teams = game:GetService("Teams")
 local UserInputService = game:GetService("UserInputService")
 local gui: ScreenGui = script.Parent.Parent
-local playerScoreFrame: Frame = gui.PlayerScoreFrame
+local playerScoreFrame: Frame = gui.RightFrame.PlayerScoreFrame
+local exitButton: ImageButton = gui.RightFrame.ExitButton
 local teamScoreFrame: Frame = gui.TeamScoreFrame
 local team1Frame: Frame = playerScoreFrame.Team1Frame
 local team2Frame: Frame = playerScoreFrame.Team2Frame
@@ -93,6 +94,12 @@ local function Open(players: {[number]: table}?, teamScores: {[string]: number}?
         end
     end
 
+    if endOfMatch then
+        exitButton.Visible = true
+    else
+        exitButton.Visible = false
+    end
+
     gui.Enabled = true
 end
 
@@ -127,11 +134,15 @@ showScoreboardEvent.OnClientEvent:Connect(function(players: {[number]: table}, t
 end)
 
 UserInputService.InputBegan:Connect(function(inputObject: InputObject)
-    if inputObject.KeyCode == Enum.KeyCode.Tab or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
+    if inputObject.KeyCode == Enum.KeyCode.T or inputObject.KeyCode == Enum.KeyCode.ButtonSelect then
         if not gui.Enabled then
             Open()
         else
             Close()
         end
     end
+end)
+
+exitButton.MouseButton1Click:Connect(function()
+    Close()
 end)
